@@ -3,6 +3,7 @@ from sqlalchemy import func
 from app.models.perangkat import Perangkat
 from app.models.cabang import Cabang
 from app.models.kategori import Kategori
+from app.models.aktivitas import Aktivitas
 
 
 def generate_kode_unik(db: Session, cabang_id: int, kategori_id: int) -> str:
@@ -76,3 +77,123 @@ def get_dashboard_stats(db: Session) -> dict:
         "per_cabang": [{"nama": n, "jumlah": j} for n, j in per_cabang],
         "per_status": [{"status": s, "jumlah": j} for s, j in per_status],
     }
+
+
+# FASE 2: Aktivitas
+def pindah_cabang(db: Session, perangkat_id: int, cabang_tujuan_id: int, user_id: int, deskripsi: str = None) -> Perangkat | None:
+    perangkat = get_perangkat_by_id(db, perangkat_id)
+    if not perangkat:
+        return None
+    cabang_asal_id = perangkat.cabang_id
+    status_sebelumnya = perangkat.status
+
+    perangkat.cabang_id = cabang_tujuan_id
+    db.commit()
+    db.refresh(perangkat)
+
+    aktivitas = Aktivitas(
+        perangkat_id=perangkat_id,
+        tipe="pindah",
+        deskripsi=deskripsi or f"Pindah dari cabang {cabang_asal_id} ke {cabang_tujuan_id}",
+        user_id=user_id,
+        cabang_asal_id=cabang_asal_id,
+        cabang_tujuan_id=cabang_tujuan_id,
+        status_sebelumnya=status_sebelumnya,
+        status_baru=perangkat.status,
+    )
+    db.add(aktivitas)
+    db.commit()
+    return perangkat
+
+
+def pinjam_perangkat(db: Session, perangkat_id: int, peminjam: str, user_id: int, deskripsi: str = None) -> Perangkat | None:
+    perangkat = get_perangkat_by_id(db, perangkat_id)
+    if not perangkat:
+        return None
+    status_sebelumnya = perangkat.status
+
+    perangkat.status = "dipinjam"
+    db.commit()
+    db.refresh(perangkat)
+
+    aktivitas = Aktivitas(
+        perangkat_id=perangkat_id,
+        tipe="peminjaman",
+        deskripsi=deskripsi or f"Dipinjam oleh {peminjam}",
+        user_id=user_id,
+        peminjam=peminjam,
+        status_sebelumnya=status_sebelumnya,
+        status_baru="dipinjam",
+    )
+    db.add(aktivitas)
+    db.commit()
+    return perangkat
+
+
+def kembalikan_perangkat(db: Session, perangkat_id: int, user_id: int, deskripsi: str = None) -> Perangkat | None:
+    perangkat = get_perangkat_by_id(db, perangkat_id)
+    if not perangkat:
+        return None
+    status_sebelumnya = perangkat.status
+
+    perangkat.status = "aktif"
+    db.commit()
+    db.refresh(perangkat)
+
+    aktivitas = Aktivitas(
+        perangkat_id=perangkat_id,
+        tipe="pengembalian",
+        deskripsi=deskripsi or "Perangkat dikembalikan",
+        user_id=user_id,
+        status_sebelumnya=status_sebelumnya,
+        status_baru="aktif",
+    )
+    db.add(aktivitas)
+    db.commit()
+    return perangkat
+
+
+def maintenance_perangkat(db: Session, perangkat_id: int, user_id: int, deskripsi: str = None) -> Perangkat | None:
+    perangkat = get_perangkat_by_id(db, perangkat_id)
+    if not perangkat:
+        return None
+    status_sebelumnya = perangkat.status
+
+    perangkat.status = "maintenance"
+    db.commit()
+    db.refresh(perangkat)
+
+    aktivitas = Aktivitas(
+        perangkat_id=perangkat_id,
+        tipe="maintenance",
+        deskripsi=deskripsi or "Masuk maintenance",
+        user_id=user_id,
+        status_sebelumnya=status_sebelumnya,
+        status_baru="maintenance",
+    )
+    db.add(aktivitas)
+    db.commit()
+    return perangkat
+
+
+def selesai_maintenance(db: Session, perangkat_id: int, user_id: int, deskripsi: str = None) -> Perangkat | None:
+    perangkat = get_perangkat_by_id(db, perangkat_id)
+    if not perangkat:
+        return None
+    status_sebelumnya = perangkat.status
+
+    perangkat.status = "aktif"
+    db.commit()
+    db.refresh(perangkat)
+
+    aktivitas = Aktivitas(
+        perangkat_id=perangkat_id,
+        tipe="selesai_maintenance",
+        deskripsi=deskripsi or "Maintenance selesai, kembali aktif",
+        user_id=user_id,
+        status_sebelumnya=status_sebelumnya,
+        status_baru="aktif",
+    )
+    db.add(aktivitas)
+    db.commit()
+    return perangkat

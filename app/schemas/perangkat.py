@@ -42,3 +42,18 @@ class PerangkatDetail(PerangkatResponse):
     kategori_nama: str
     cabang_nama: str
     cabang_kode: str
+
+
+# FASE 2: Aktivitas schemas
+class PindahRequest(BaseModel):
+    cabang_tujuan_id: int
+    deskripsi: Optional[str] = None
+
+
+class PinjamRequest(BaseModel):
+    peminjam: str
+    deskripsi: Optional[str] = None
+
+
+class MaintenanceRequest(BaseModel):
+    deskripsi: Optional[str] = None
