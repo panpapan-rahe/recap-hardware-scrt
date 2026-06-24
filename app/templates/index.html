@@ -18,6 +18,7 @@
             <a href="#" @click.prevent="currentPage = 'kategori'" :class="{ active: currentPage === 'kategori' }">Kategori</a>
             <a href="#" @click.prevent="currentPage = 'perangkat'" :class="{ active: currentPage === 'perangkat' }">Perangkat</a>
             <a href="#" @click.prevent="currentPage = 'aktivitas'" :class="{ active: currentPage === 'aktivitas' }">Aktivitas</a>
+            <a href="#" @click.prevent="currentPage = 'report'" :class="{ active: currentPage === 'report' }">Report</a>
         </div>
         <div class="nav-user">
             <span x-text="user?.nama_lengkap"></span>
@@ -224,6 +225,59 @@
                 </tbody>
             </table>
             <p x-show="aktivitasList.length === 0" class="text-muted text-center">Belum ada aktivitas.</p>
+        </section>
+
+        <!-- REPORT -->
+        <section x-show="currentPage === 'report'" x-transition>
+            <div class="page-header">
+                <h2>Report & Export</h2>
+                <div class="action-buttons">
+                    <button @click="exportCSV()" class="btn btn-success btn-sm">📊 Export CSV</button>
+                    <button @click="exportPDF()" class="btn btn-danger btn-sm">📄 Export PDF</button>
+                </div>
+            </div>
+            <div class="filters">
+                <select x-model="reportCabang" @change="applyReportFilter()" class="form-control">
+                    <option value="">Semua Cabang</option>
+                    <template x-for="c in cabangList" :key="c.id">
+                        <option :value="c.id" x-text="c.nama"></option>
+                    </template>
+                </select>
+                <select x-model="reportKategori" @change="applyReportFilter()" class="form-control">
+                    <option value="">Semua Kategori</option>
+                    <template x-for="k in kategoriList" :key="k.id">
+                        <option :value="k.id" x-text="k.nama"></option>
+                    </template>
+                </select>
+                <select x-model="reportStatus" @change="applyReportFilter()" class="form-control">
+                    <option value="">Semua Status</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="dipinjam">Dipinjam</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="mutasi">Mutasi</option>
+                    <option value="retired">Retired</option>
+                </select>
+            </div>
+            <p class="text-muted">Total: <span x-text="reportData.length"></span> perangkat</p>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Merk/Model</th><th>Cabang</th><th>Lokasi</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <template x-for="item in reportData" :key="item.id">
+                        <tr>
+                            <td><span x-text="item.kode_unik"></span></td>
+                            <td><span x-text="item.nama"></span></td>
+                            <td><span x-text="item.kategori"></span></td>
+                            <td><span x-text="(item.merk || '') + ' ' + (item.model || '')"></span></td>
+                            <td><span x-text="item.cabang"></span></td>
+                            <td><span x-text="item.lokasi_detail || '-'"></span></td>
+                            <td><span class="badge" :class="'badge-' + item.status" x-text="item.status"></span></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <p x-show="reportData.length === 0" class="text-muted text-center">Tidak ada data untuk filter yang dipilih.</p>
         </section>
 
     </main>

@@ -34,6 +34,12 @@ function app() {
         activityTitle: '',
         activityForm: {},
 
+        // REPORT
+        reportCabang: '',
+        reportKategori: '',
+        reportStatus: '',
+        reportData: [],
+
         // TOAST
         toast: { show: false, type: 'info', message: '' },
 
@@ -198,6 +204,58 @@ function app() {
             try { await this.api('POST', `/perangkat/${id}/selesai-maintenance`, {}); this.showToast('Maintenance selesai, perangkat aktif kembali', 'success'); this.closeModal(); this.loadAll(); }
             catch (e) { this.showToast(e.message, 'error'); }
             finally { this.loading = false; }
+        },
+
+        // REPORT
+        async applyReportFilter() {
+            try {
+                let url = '/api/report/data?';
+                const params = [];
+                if (this.reportCabang) params.push(`cabang_id=${this.reportCabang}`);
+                if (this.reportKategori) params.push(`kategori_id=${this.reportKategori}`);
+                if (this.reportStatus) params.push(`status=${this.reportStatus}`);
+                url += params.join('&');
+                const res = await this.api('GET', url);
+                this.reportData = res.data || [];
+            } catch (e) { this.showToast(e.message, 'error'); }
+        },
+        async exportCSV() {
+            try {
+                let url = '/api/report/export/csv?';
+                const params = [];
+                if (this.reportCabang) params.push(`cabang_id=${this.reportCabang}`);
+                if (this.reportKategori) params.push(`kategori_id=${this.reportKategori}`);
+                if (this.reportStatus) params.push(`status=${this.reportStatus}`);
+                url += params.join('&');
+                const res = await fetch(`/api${url}`, {
+                    headers: { 'Authorization': `Bearer ${this.token}` }
+                });
+                const blob = await res.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'report_perangkat.csv';
+                a.click();
+                this.showToast('CSV berhasil diunduh', 'success');
+            } catch (e) { this.showToast('Gagal export CSV', 'error'); }
+        },
+        async exportPDF() {
+            try {
+                let url = '/api/report/export/pdf?';
+                const params = [];
+                if (this.reportCabang) params.push(`cabang_id=${this.reportCabang}`);
+                if (this.reportKategori) params.push(`kategori_id=${this.reportKategori}`);
+                if (this.reportStatus) params.push(`status=${this.reportStatus}`);
+                url += params.join('&');
+                const res = await fetch(`/api${url}`, {
+                    headers: { 'Authorization': `Bearer ${this.token}` }
+                });
+                const blob = await res.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'report_perangkat.pdf';
+                a.click();
+                this.showToast('PDF berhasil diunduh', 'success');
+            } catch (e) { this.showToast('Gagal export PDF', 'error'); }
         },
 
         // TOAST

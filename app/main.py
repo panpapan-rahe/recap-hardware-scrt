@@ -13,6 +13,7 @@ from app.routers import (
     kategori_router,
     perangkat_router,
     aktivitas_router,
+    report_router,
 )
 from app.config import DATABASE_URL
 
@@ -47,6 +48,7 @@ app.include_router(cabang_router, prefix="/api")
 app.include_router(kategori_router, prefix="/api")
 app.include_router(perangkat_router, prefix="/api")
 app.include_router(aktivitas_router, prefix="/api")
+app.include_router(report_router, prefix="/api")
 
 
 @app.get("/", response_class=HTMLResponse)
