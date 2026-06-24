@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "9103:8000"
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/db.sqlite3
+      - SECRET_KEY=change...-key
+    restart: unless-stopped
