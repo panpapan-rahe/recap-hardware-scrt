@@ -1,19 +1,17 @@
+import bcrypt
 from datetime import datetime, timedelta
-from jose import jwt, JWTError
-from passlib.context import CryptContext
+from jose import jwt
 from sqlalchemy.orm import Session
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.models.user import User
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 def create_access_token(data: dict) -> str:
@@ -27,14 +25,14 @@ def decode_token(token: str) -> dict:
     return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
 
-def authenticate_user(db: Session, username: str, password: str) -> User | None:
+def authenticate_user(db: Session, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()
     if user and verify_password(password, user.password_hash):
         return user
     return None
 
 
-def create_user(db: Session, username: str, password: str, nama_lengkap: str, role: str = "viewer") -> User:
+def create_user(db: Session, username: str, password: str, nama_lengkap: str, role: str = "viewer"):
     user = User(
         username=username,
         password_hash=hash_password(password),
@@ -47,5 +45,5 @@ def create_user(db: Session, username: str, password: str, nama_lengkap: str, ro
     return user
 
 
-def get_user_by_id(db: Session, user_id: int) -> User | None:
+def get_user_by_id(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
