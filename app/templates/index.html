@@ -9,7 +9,7 @@
 </head>
 <body x-data="app()" x-init="init()">
 
-    <!-- NAVBAR (hidden saat belum login) -->
+    <!-- NAVBAR -->
     <nav x-show="isLoggedIn" class="navbar">
         <div class="nav-brand">📦 Recap Hardware</div>
         <div class="nav-links">
@@ -18,7 +18,6 @@
             <a href="#" @click.prevent="currentPage = 'kategori'" :class="{ active: currentPage === 'kategori' }">Kategori</a>
             <a href="#" @click.prevent="currentPage = 'perangkat'" :class="{ active: currentPage === 'perangkat' }">Perangkat</a>
             <a href="#" @click.prevent="currentPage = 'aktivitas'" :class="{ active: currentPage === 'aktivitas' }">Aktivitas</a>
-            <a href="#" @click.prevent="currentPage = 'report'" :class="{ active: currentPage === 'report' }">Report</a>
         </div>
         <div class="nav-user">
             <span x-text="user?.nama_lengkap"></span>
@@ -47,7 +46,7 @@
                 </button>
             </form>
             <p class="text-muted text-center mt-3">
-                <small>Belum punya akun? Hubungi admin untuk dibuatkan akun.</small>
+                <small>Default login: admin / admin123</small>
             </p>
         </div>
     </div>
@@ -70,7 +69,6 @@
                     </div>
                 </template>
             </div>
-
             <h3 class="mt-4">Status Perangkat</h3>
             <div class="stats-grid">
                 <template x-for="item in stats.per_status" :key="item.status">
@@ -90,13 +88,7 @@
             </div>
             <table class="data-table">
                 <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Kode</th>
-                        <th>Nama</th>
-                        <th>Alamat</th>
-                        <th>Aksi</th>
-                    </tr>
+                    <tr><th>No</th><th>Kode</th><th>Nama</th><th>Alamat</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
                     <template x-for="(item, idx) in cabangList" :key="item.id">
@@ -124,12 +116,7 @@
             </div>
             <table class="data-table">
                 <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Deskripsi</th>
-                        <th>Aksi</th>
-                    </tr>
+                    <tr><th>No</th><th>Nama</th><th>Deskripsi</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
                     <template x-for="(item, idx) in kategoriList" :key="item.id">
@@ -178,26 +165,16 @@
             </div>
             <table class="data-table">
                 <thead>
-                    <tr>
-                        <th>Kode</th>
-                        <th>Nama</th>
-                        <th>Kategori</th>
-                        <th>Merk/Model</th>
-                        <th>Serial No.</th>
-                        <th>Cabang</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
+                    <tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Merk/Model</th><th>Cabang</th><th>Status</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
                     <template x-for="item in perangkatList" :key="item.id">
                         <tr>
                             <td><span x-text="item.kode_unik"></span></td>
                             <td><span x-text="item.nama"></span></td>
-                            <td><span x-text="item.kategori_id"></span></td>
+                            <td><span x-text="getNamaKategori(item.kategori_id)"></span></td>
                             <td><span x-text="(item.merk || '') + ' ' + (item.model || '')"></span></td>
-                            <td><span x-text="item.serial_number || '-'"></span></td>
-                            <td><span x-text="item.cabang_id"></span></td>
+                            <td><span x-text="getNamaCabang(item.cabang_id)"></span></td>
                             <td><span class="badge" :class="'badge-' + item.status" x-text="item.status"></span></td>
                             <td>
                                 <button @click="detailPerangkat(item)" class="btn btn-sm btn-info">Detail</button>
@@ -211,16 +188,42 @@
             <p x-show="perangkatList.length === 0" class="text-muted text-center">Belum ada data perangkat.</p>
         </section>
 
-        <!-- AKTIVITAS (Fase 2 - placeholder) -->
+        <!-- AKTIVITAS -->
         <section x-show="currentPage === 'aktivitas'" x-transition>
             <h2>Log Aktivitas</h2>
-            <p class="text-muted">Fitur ini akan tersedia di Fase 2.</p>
-        </section>
-
-        <!-- REPORT (Fase 3 - placeholder) -->
-        <section x-show="currentPage === 'report'" x-transition>
-            <h2>Report & Export</h2>
-            <p class="text-muted">Fitur ini akan tersedia di Fase 3.</p>
+            <div class="filters">
+                <select x-model="filterAktivitasCabang" @change="loadAktivitas()" class="form-control">
+                    <option value="">Semua Cabang</option>
+                    <template x-for="c in cabangList" :key="c.id">
+                        <option :value="c.id" x-text="c.nama"></option>
+                    </template>
+                </select>
+                <select x-model="filterAktivitasTipe" @change="loadAktivitas()" class="form-control">
+                    <option value="">Semua Tipe</option>
+                    <option value="pindah">Pindah</option>
+                    <option value="peminjaman">Peminjaman</option>
+                    <option value="pengembalian">Pengembalian</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="selesai_maintenance">Selesai Maintenance</option>
+                </select>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Waktu</th><th>Perangkat</th><th>Tipe</th><th>Deskripsi</th><th>User</th></tr>
+                </thead>
+                <tbody>
+                    <template x-for="item in aktivitasList" :key="item.id">
+                        <tr>
+                            <td><span x-text="formatDate(item.created_at)"></span></td>
+                            <td><span x-text="item.perangkat_kode || '-'"></span></td>
+                            <td><span class="badge" x-text="item.tipe"></span></td>
+                            <td><span x-text="item.deskripsi || '-'"></span></td>
+                            <td><span x-text="item.username || '-'"></span></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <p x-show="aktivitasList.length === 0" class="text-muted text-center">Belum ada aktivitas.</p>
         </section>
 
     </main>
@@ -230,23 +233,13 @@
         <div class="modal">
             <h3 x-text="editMode === 'cabang' ? 'Edit Cabang' : 'Tambah Cabang'"></h3>
             <form @submit.prevent="saveItem('cabang')">
-                <div class="form-group">
-                    <label>Kode</label>
-                    <input type="text" x-model="form.kode" required>
-                </div>
-                <div class="form-group">
-                    <label>Nama</label>
-                    <input type="text" x-model="form.nama" required>
-                </div>
-                <div class="form-group">
-                    <label>Alamat</label>
-                    <textarea x-model="form.alamat" rows="2"></textarea>
-                </div>
+                <div class="form-group"><label>Kode</label><input type="text" x-model="form.kode" required></div>
+                <div class="form-group"><label>Nama</label><input type="text" x-model="form.nama" required></div>
+                <div class="form-group"><label>Alamat</label><textarea x-model="form.alamat" rows="2"></textarea></div>
                 <div class="modal-actions">
                     <button type="button" @click="closeModal()" class="btn btn-secondary">Batal</button>
                     <button type="submit" class="btn btn-primary" :disabled="loading">
-                        <span x-show="!loading">Simpan</span>
-                        <span x-show="loading">Menyimpan...</span>
+                        <span x-show="!loading">Simpan</span><span x-show="loading">Menyimpan...</span>
                     </button>
                 </div>
             </form>
@@ -258,19 +251,12 @@
         <div class="modal">
             <h3 x-text="editMode === 'kategori' ? 'Edit Kategori' : 'Tambah Kategori'"></h3>
             <form @submit.prevent="saveItem('kategori')">
-                <div class="form-group">
-                    <label>Nama</label>
-                    <input type="text" x-model="form.nama" required>
-                </div>
-                <div class="form-group">
-                    <label>Deskripsi</label>
-                    <textarea x-model="form.deskripsi" rows="2"></textarea>
-                </div>
+                <div class="form-group"><label>Nama</label><input type="text" x-model="form.nama" required></div>
+                <div class="form-group"><label>Deskripsi</label><textarea x-model="form.deskripsi" rows="2"></textarea></div>
                 <div class="modal-actions">
                     <button type="button" @click="closeModal()" class="btn btn-secondary">Batal</button>
                     <button type="submit" class="btn btn-primary" :disabled="loading">
-                        <span x-show="!loading">Simpan</span>
-                        <span x-show="loading">Menyimpan...</span>
+                        <span x-show="!loading">Simpan</span><span x-show="loading">Menyimpan...</span>
                     </button>
                 </div>
             </form>
@@ -283,52 +269,30 @@
             <h3 x-text="editMode === 'perangkat' ? 'Edit Perangkat' : 'Tambah Perangkat'"></h3>
             <form @submit.prevent="saveItem('perangkat')">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Nama</label>
-                        <input type="text" x-model="form.nama" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Kategori</label>
+                    <div class="form-group"><label>Nama</label><input type="text" x-model="form.nama" required></div>
+                    <div class="form-group"><label>Kategori</label>
                         <select x-model="form.kategori_id" required>
                             <option value="">Pilih Kategori</option>
-                            <template x-for="k in kategoriList" :key="k.id">
-                                <option :value="k.id" x-text="k.nama"></option>
-                            </template>
+                            <template x-for="k in kategoriList" :key="k.id"><option :value="k.id" x-text="k.nama"></option></template>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Merk</label>
-                        <input type="text" x-model="form.merk">
-                    </div>
-                    <div class="form-group">
-                        <label>Model</label>
-                        <input type="text" x-model="form.model">
-                    </div>
+                    <div class="form-group"><label>Merk</label><input type="text" x-model="form.merk"></div>
+                    <div class="form-group"><label>Model</label><input type="text" x-model="form.model"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Serial Number</label>
-                        <input type="text" x-model="form.serial_number">
-                    </div>
-                    <div class="form-group">
-                        <label>Tahun Beli</label>
-                        <input type="number" x-model="form.tahun_beli">
-                    </div>
+                    <div class="form-group"><label>Serial Number</label><input type="text" x-model="form.serial_number"></div>
+                    <div class="form-group"><label>Tahun Beli</label><input type="number" x-model="form.tahun_beli"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Cabang</label>
+                    <div class="form-group"><label>Cabang</label>
                         <select x-model="form.cabang_id" required>
                             <option value="">Pilih Cabang</option>
-                            <template x-for="c in cabangList" :key="c.id">
-                                <option :value="c.id" x-text="c.nama"></option>
-                            </template>
+                            <template x-for="c in cabangList" :key="c.id"><option :value="c.id" x-text="c.nama"></option></template>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Status</label>
+                    <div class="form-group"><label>Status</label>
                         <select x-model="form.status">
                             <option value="aktif">Aktif</option>
                             <option value="dipinjam">Dipinjam</option>
@@ -338,15 +302,11 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Lokasi Detail</label>
-                    <input type="text" x-model="form.lokasi_detail" placeholder="Ruangan / Lantai">
-                </div>
+                <div class="form-group"><label>Lokasi Detail</label><input type="text" x-model="form.lokasi_detail" placeholder="Ruangan / Lantai"></div>
                 <div class="modal-actions">
                     <button type="button" @click="closeModal()" class="btn btn-secondary">Batal</button>
                     <button type="submit" class="btn btn-primary" :disabled="loading">
-                        <span x-show="!loading">Simpan</span>
-                        <span x-show="loading">Menyimpan...</span>
+                        <span x-show="!loading">Simpan</span><span x-show="loading">Menyimpan...</span>
                     </button>
                 </div>
             </form>
@@ -354,22 +314,53 @@
     </div>
 
     <!-- MODAL DETAIL PERANGKAT -->
-    <div x-show="modal === 'detail'" class="modal-overlay" x-transition>
+    <div x-show="modal === 'detail'" class="modal-overlay" @click.self="closeModal()" x-transition>
         <div class="modal modal-lg">
             <h3>Detail Perangkat</h3>
             <div x-show="selectedItem">
                 <table class="detail-table">
                     <tr><td><strong>Kode Unik</strong></td><td x-text="selectedItem.kode_unik"></td></tr>
                     <tr><td><strong>Nama</strong></td><td x-text="selectedItem.nama"></td></tr>
-                    <tr><td><strong>Kategori</strong></td><td x-text="selectedItem.kategori_id"></td></tr>
+                    <tr><td><strong>Kategori</strong></td><td x-text="getNamaKategori(selectedItem.kategori_id)"></td></tr>
                     <tr><td><strong>Merk</strong></td><td x-text="selectedItem.merk || '-'"></td></tr>
                     <tr><td><strong>Model</strong></td><td x-text="selectedItem.model || '-'"></td></tr>
                     <tr><td><strong>Serial Number</strong></td><td x-text="selectedItem.serial_number || '-'"></td></tr>
                     <tr><td><strong>Tahun Beli</strong></td><td x-text="selectedItem.tahun_beli || '-'"></td></tr>
-                    <tr><td><strong>Cabang</strong></td><td x-text="selectedItem.cabang_id"></td></tr>
+                    <tr><td><strong>Cabang</strong></td><td x-text="getNamaCabang(selectedItem.cabang_id)"></td></tr>
                     <tr><td><strong>Lokasi</strong></td><td x-text="selectedItem.lokasi_detail || '-'"></td></tr>
                     <tr><td><strong>Status</strong></td><td><span class="badge" :class="'badge-' + selectedItem.status" x-text="selectedItem.status"></span></td></tr>
                 </table>
+
+                <!-- TOMBOL AKTIVITAS -->
+                <div class="activity-actions" x-show="selectedItem.status !== 'mutasi' && selectedItem.status !== 'retired'">
+                    <h4 class="mt-4">Aksi Aktivitas</h4>
+                    <div class="action-buttons">
+                        <button @click="openActivityModal('pindah')" class="btn btn-primary btn-sm">📍 Pindah Cabang</button>
+                        <button x-show="selectedItem.status === 'aktif'" @click="openActivityModal('pinjam')" class="btn btn-warning btn-sm">📋 Pinjamkan</button>
+                        <button x-show="selectedItem.status === 'dipinjam'" @click="kembalikan(selectedItem.id)" class="btn btn-success btn-sm">✅ Kembalikan</button>
+                        <button x-show="selectedItem.status === 'aktif'" @click="openActivityModal('maintenance')" class="btn btn-danger btn-sm">🔧 Maintenance</button>
+                        <button x-show="selectedItem.status === 'maintenance'" @click="selesaiMaintenance(selectedItem.id)" class="btn btn-success btn-sm">✅ Selesai Maintenance</button>
+                    </div>
+                </div>
+
+                <!-- RIWAYAT AKTIVITAS -->
+                <h4 class="mt-4">Riwayat Aktivitas</h4>
+                <table class="data-table mt-3">
+                    <thead>
+                        <tr><th>Waktu</th><th>Tipe</th><th>Deskripsi</th><th>User</th></tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="a in riwayatList" :key="a.id">
+                            <tr>
+                                <td><span x-text="formatDate(a.created_at)"></span></td>
+                                <td><span class="badge" x-text="a.tipe"></span></td>
+                                <td><span x-text="a.deskripsi || '-'"></span></td>
+                                <td><span x-text="a.username || '-'"></span></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+                <p x-show="riwayatList.length === 0" class="text-muted text-center">Belum ada riwayat aktivitas.</p>
             </div>
             <div class="modal-actions">
                 <button @click="closeModal()" class="btn btn-secondary">Tutup</button>
@@ -377,7 +368,46 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
+    <!-- MODAL AKTIVITAS (pindah / pinjam / maintenance) -->
+    <div x-show="modal === 'activity'" class="modal-overlay" x-transition>
+        <div class="modal">
+            <h3 x-text="activityTitle"></h3>
+            <form @submit.prevent="submitActivity()">
+                <!-- Pindah -->
+                <template x-if="activityType === 'pindah'">
+                    <div class="form-group">
+                        <label>Cabang Tujuan</label>
+                        <select x-model="activityForm.cabang_tujuan_id" required>
+                            <option value="">Pilih Cabang</option>
+                            <template x-for="c in cabangList" :key="c.id">
+                                <option x-show="c.id != selectedItem?.cabang_id" :value="c.id" x-text="c.nama"></option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
+                <!-- Pinjam -->
+                <template x-if="activityType === 'pinjam'">
+                    <div class="form-group">
+                        <label>Nama Peminjam</label>
+                        <input type="text" x-model="activityForm.peminjam" placeholder="Siapa yang meminjam?" required>
+                    </div>
+                </template>
+                <!-- umum deskripsi -->
+                <div class="form-group">
+                    <label>Deskripsi (opsional)</label>
+                    <textarea x-model="activityForm.deskripsi" rows="2" placeholder="Catatan tambahan..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" @click="closeModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary" :disabled="loading">
+                        <span x-show="!loading">Simpan</span><span x-show="loading">Menyimpan...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST -->
     <div x-show="toast.show" class="toast" :class="'toast-' + toast.type" x-transition>
         <span x-text="toast.message"></span>
     </div>

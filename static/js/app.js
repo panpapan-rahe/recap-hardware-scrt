@@ -13,10 +13,14 @@ function app() {
         cabangList: [],
         kategoriList: [],
         perangkatList: [],
+        aktivitasList: [],
+        riwayatList: [],
         stats: { total: 0, per_cabang: [], per_status: [] },
         filterCabang: '',
         filterKategori: '',
         filterStatus: '',
+        filterAktivitasCabang: '',
+        filterAktivitasTipe: '',
 
         // MODAL
         modal: null,
@@ -24,6 +28,11 @@ function app() {
         editId: null,
         form: {},
         selectedItem: null,
+
+        // AKTIVITAS
+        activityType: null,
+        activityTitle: '',
+        activityForm: {},
 
         // TOAST
         toast: { show: false, type: 'info', message: '' },
@@ -38,19 +47,27 @@ function app() {
             }
         },
 
+        // HELPER
+        getNamaCabang(id) {
+            const c = this.cabangList.find(x => x.id === id);
+            return c ? c.nama : id;
+        },
+        getNamaKategori(id) {
+            const k = this.kategoriList.find(x => x.id === id);
+            return k ? k.nama : id;
+        },
+        formatDate(d) {
+            if (!d) return '-';
+            return new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        },
+
         // API CALL
         async api(method, url, body = null) {
-            const opts = {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-            };
+            const opts = { method, headers: { 'Content-Type': 'application/json' } };
             if (this.token) opts.headers['Authorization'] = `Bearer ${this.token}`;
             if (body) opts.body = JSON.stringify(body);
             const res = await fetch(`/api${url}`, opts);
-            if (res.status === 401) {
-                this.logout();
-                throw new Error('Unauthorized');
-            }
+            if (res.status === 401) { this.logout(); throw new Error('Unauthorized'); }
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || 'Error');
             return data;
@@ -68,46 +85,23 @@ function app() {
                 await this.fetchMe();
                 this.loadAll();
                 this.currentPage = 'dashboard';
-            } catch (e) {
-                this.loginError = e.message;
-            } finally {
-                this.loading = false;
-            }
+            } catch (e) { this.loginError = e.message; }
+            finally { this.loading = false; }
         },
-
         async fetchMe() {
-            try {
-                this.user = await this.api('GET', '/auth/me');
-            } catch (e) {
-                this.logout();
-            }
+            try { this.user = await this.api('GET', '/auth/me'); } catch (e) { this.logout(); }
         },
-
         logout() {
-            this.token = null;
-            this.isLoggedIn = false;
-            this.user = null;
+            this.token = null; this.isLoggedIn = false; this.user = null;
             localStorage.removeItem('token');
         },
 
         // LOAD DATA
         async loadAll() {
-            await Promise.all([
-                this.loadCabang(),
-                this.loadKategori(),
-                this.loadPerangkat(),
-                this.loadDashboard(),
-            ]);
+            await Promise.all([this.loadCabang(), this.loadKategori(), this.loadPerangkat(), this.loadDashboard(), this.loadAktivitas()]);
         },
-
-        async loadCabang() {
-            try { this.cabangList = await this.api('GET', '/cabang/'); } catch (e) {}
-        },
-
-        async loadKategori() {
-            try { this.kategoriList = await this.api('GET', '/kategori/'); } catch (e) {}
-        },
-
+        async loadCabang() { try { this.cabangList = await this.api('GET', '/cabang/'); } catch (e) {} },
+        async loadKategori() { try { this.kategoriList = await this.api('GET', '/kategori/'); } catch (e) {} },
         async loadPerangkat() {
             try {
                 let url = '/perangkat/';
@@ -119,37 +113,31 @@ function app() {
                 this.perangkatList = await this.api('GET', url);
             } catch (e) {}
         },
-
-        async loadDashboard() {
-            try { this.stats = await this.api('GET', '/perangkat/dashboard/stats'); } catch (e) {}
+        async loadDashboard() { try { this.stats = await this.api('GET', '/perangkat/dashboard/stats'); } catch (e) {} },
+        async loadAktivitas() {
+            try {
+                let url = '/aktivitas/';
+                const params = [];
+                if (this.filterAktivitasTipe) params.push(`tipe=${this.filterAktivitasTipe}`);
+                if (params.length) url += '?' + params.join('&');
+                this.aktivitasList = await this.api('GET', url);
+            } catch (e) {}
         },
 
         // MODAL
-        openModal(type) {
-            this.modal = type;
-            this.editMode = null;
-            this.editId = null;
-            this.form = {};
-        },
-
-        editItem(type, item) {
-            this.modal = type;
-            this.editMode = type;
-            this.editId = item.id;
-            this.form = { ...item };
-        },
-
+        openModal(type) { this.modal = type; this.editMode = null; this.editId = null; this.form = {}; },
+        editItem(type, item) { this.modal = type; this.editMode = type; this.editId = item.id; this.form = { ...item }; },
         closeModal() {
-            this.modal = null;
-            this.editMode = null;
-            this.editId = null;
-            this.form = {};
-            this.selectedItem = null;
+            this.modal = null; this.editMode = null; this.editId = null; this.form = {};
+            this.selectedItem = null; this.riwayatList = [];
+            this.activityType = null; this.activityForm = {};
         },
-
         detailPerangkat(item) {
-            this.selectedItem = item;
-            this.modal = 'detail';
+            this.selectedItem = item; this.modal = 'detail';
+            this.loadRiwayat(item.id);
+        },
+        async loadRiwayat(perangkatId) {
+            try { this.riwayatList = await this.api('GET', `/aktivitas/perangkat/${perangkatId}`); } catch (e) { this.riwayatList = []; }
         },
 
         // CRUD
@@ -163,24 +151,53 @@ function app() {
                     await this.api('POST', `/${type}/`, this.form);
                     this.showToast('Data berhasil ditambahkan', 'success');
                 }
-                this.closeModal();
-                this.loadAll();
-            } catch (e) {
-                this.showToast(e.message, 'error');
-            } finally {
-                this.loading = false;
-            }
+                this.closeModal(); this.loadAll();
+            } catch (e) { this.showToast(e.message, 'error'); }
+            finally { this.loading = false; }
         },
-
         async deleteItem(type, id) {
             if (!confirm('Yakin ingin menghapus data ini?')) return;
+            try { await this.api('DELETE', `/${type}/${id}`); this.showToast('Data berhasil dihapus', 'success'); this.loadAll(); }
+            catch (e) { this.showToast(e.message, 'error'); }
+        },
+
+        // AKTIVITAS
+        openActivityModal(type) {
+            this.activityType = type;
+            this.activityForm = {};
+            const titles = { pindah: 'Pindah Cabang', pinjam: 'Pinjamkan Perangkat', maintenance: 'Masuk Maintenance' };
+            this.activityTitle = titles[type];
+            this.modal = 'activity';
+        },
+        async submitActivity() {
+            this.loading = true;
             try {
-                await this.api('DELETE', `/${type}/${id}`);
-                this.showToast('Data berhasil dihapus', 'success');
+                const id = this.selectedItem.id;
+                let body = {};
+                if (this.activityType === 'pindah') body = { cabang_tujuan_id: this.activityForm.cabang_tujuan_id, deskripsi: this.activityForm.deskripsi };
+                else if (this.activityType === 'pinjam') body = { peminjam: this.activityForm.peminjam, deskripsi: this.activityForm.deskripsi };
+                else if (this.activityType === 'maintenance') body = { deskripsi: this.activityForm.deskripsi };
+
+                await this.api('POST', `/perangkat/${id}/${this.activityType}`, body);
+                this.showToast('Aktivitas berhasil dicatat', 'success');
+                this.closeModal();
                 this.loadAll();
-            } catch (e) {
-                this.showToast(e.message, 'error');
-            }
+            } catch (e) { this.showToast(e.message, 'error'); }
+            finally { this.loading = false; }
+        },
+        async kembalikan(id) {
+            if (!confirm('Yakin ingin mengembalikan perangkat ini?')) return;
+            this.loading = true;
+            try { await this.api('POST', `/perangkat/${id}/kembalikan`, {}); this.showToast('Perangkat berhasil dikembalikan', 'success'); this.closeModal(); this.loadAll(); }
+            catch (e) { this.showToast(e.message, 'error'); }
+            finally { this.loading = false; }
+        },
+        async selesaiMaintenance(id) {
+            if (!confirm('Maintenance sudah selesai?')) return;
+            this.loading = true;
+            try { await this.api('POST', `/perangkat/${id}/selesai-maintenance`, {}); this.showToast('Maintenance selesai, perangkat aktif kembali', 'success'); this.closeModal(); this.loadAll(); }
+            catch (e) { this.showToast(e.message, 'error'); }
+            finally { this.loading = false; }
         },
 
         // TOAST
