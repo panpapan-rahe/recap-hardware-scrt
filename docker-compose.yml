@@ -4,9 +4,8 @@ services:
     ports:
       - "9103:8000"
     volumes:
-      - ./app:/app/app
       - ./data:/app/data
     environment:
       - DATABASE_URL=sqlite:///./data/db.sqlite3
-      - SECRET_KEY=change...-key
+      - SECRET_KEY=change-me-in-production-please-use-a-long-random-string
     restart: unless-stopped
