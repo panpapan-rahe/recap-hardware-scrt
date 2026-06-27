@@ -17,14 +17,27 @@ from app.routers import (
 )
 from app.config import DATABASE_URL
 
-# Buat tabel jika belum ada
-Base.metadata.create_all(bind=engine)
-
 # Buat folder data jika pakai SQLite
 if "sqlite" in DATABASE_URL:
     data_dir = os.path.dirname(DATABASE_URL.replace("sqlite:///", ""))
     if data_dir:
         os.makedirs(data_dir, exist_ok=True)
+
+# Buat tabel jika belum ada
+Base.metadata.create_all(bind=engine)
+
+
+def ensure_sqlite_schema():
+    if "sqlite" not in DATABASE_URL:
+        return
+    with engine.begin() as conn:
+        cols = conn.exec_driver_sql("PRAGMA table_info(perangkat)").fetchall()
+        col_names = {row[1] for row in cols}
+        if "adjuro" not in col_names:
+            conn.exec_driver_sql("ALTER TABLE perangkat ADD COLUMN adjuro VARCHAR(100)")
+
+
+ensure_sqlite_schema()
 
 app = FastAPI(title="Recap Hardware", version="1.0.0")
 

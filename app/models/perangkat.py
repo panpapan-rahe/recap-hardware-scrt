@@ -13,6 +13,7 @@ class Perangkat(Base):
     kategori_id = Column(Integer, ForeignKey("kategori.id"), nullable=False)
     merk = Column(String(50))
     model = Column(String(50))
+    adjuro = Column(String(100))
     serial_number = Column(String(100))
     tahun_beli = Column(Integer)
     status = Column(String(20), default="aktif")

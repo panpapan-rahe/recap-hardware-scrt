@@ -14,9 +14,16 @@ def generate_kode_unik(db: Session, cabang_id: int, kategori_id: int) -> str:
     return f"{cabang.kode}-{prefix}-{count:04d}"
 
 
+def compose_nama(merk: str | None, model: str | None) -> str:
+    parts = [p.strip() for p in [merk or "", model or ""] if p and p.strip()]
+    return " ".join(parts) if parts else "Perangkat"
+
+
 def create_perangkat(db: Session, data: dict) -> Perangkat:
     kode = generate_kode_unik(db, data["cabang_id"], data["kategori_id"])
-    perangkat = Perangkat(**data, kode_unik=kode)
+    payload = dict(data)
+    payload["nama"] = compose_nama(payload.get("merk"), payload.get("model"))
+    perangkat = Perangkat(**payload, kode_unik=kode)
     db.add(perangkat)
     db.commit()
     db.refresh(perangkat)
@@ -45,6 +52,7 @@ def update_perangkat(db: Session, perangkat_id: int, data: dict) -> Perangkat | 
     for key, value in data.items():
         if value is not None:
             setattr(perangkat, key, value)
+    perangkat.nama = compose_nama(perangkat.merk, perangkat.model)
     db.commit()
     db.refresh(perangkat)
     return perangkat

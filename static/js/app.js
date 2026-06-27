@@ -55,24 +55,28 @@ function app() {
 
         // HELPER
         getNamaCabang(id) {
-            const c = this.cabangList.find(x => x.id === id);
+            if (!id) return '-';
+            const c = this.cabangList.find(x => x.id == id);
             return c ? c.nama : id;
         },
         getNamaKategori(id) {
-            const k = this.kategoriList.find(x => x.id === id);
+            if (!id) return '-';
+            const k = this.kategoriList.find(x => x.id == id);
             return k ? k.nama : id;
         },
         formatDate(d) {
             if (!d) return '-';
-            return new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            try {
+                return new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch(e) { return d; }
         },
 
         // API CALL
         async api(method, url, body = null) {
             const opts = { method, headers: { 'Content-Type': 'application/json' } };
-            if (this.token) opts.headers['Authorization'] = `Bearer ${this.token}`;
+            if (this.token) opts.headers['Authorization'] = 'Bearer ' + this.token;
             if (body) opts.body = JSON.stringify(body);
-            const res = await fetch(`/api${url}`, opts);
+            const res = await fetch('/api' + url, opts);
             if (res.status === 401) { this.logout(); throw new Error('Unauthorized'); }
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || 'Error');
@@ -106,33 +110,43 @@ function app() {
         async loadAll() {
             await Promise.all([this.loadCabang(), this.loadKategori(), this.loadPerangkat(), this.loadDashboard(), this.loadAktivitas()]);
         },
-        async loadCabang() { try { this.cabangList = await this.api('GET', '/cabang/'); } catch (e) {} },
-        async loadKategori() { try { this.kategoriList = await this.api('GET', '/kategori/'); } catch (e) {} },
+        async loadCabang() { try { this.cabangList = await this.api('GET', '/cabang/') || []; } catch (e) { this.cabangList = []; } },
+        async loadKategori() { try { this.kategoriList = await this.api('GET', '/kategori/') || []; } catch (e) { this.kategoriList = []; } },
         async loadPerangkat() {
             try {
                 let url = '/perangkat/';
                 const params = [];
-                if (this.filterCabang) params.push(`cabang_id=${this.filterCabang}`);
-                if (this.filterKategori) params.push(`kategori_id=${this.filterKategori}`);
-                if (this.filterStatus) params.push(`status=${this.filterStatus}`);
+                if (this.filterCabang) params.push('cabang_id=' + this.filterCabang);
+                if (this.filterKategori) params.push('kategori_id=' + this.filterKategori);
+                if (this.filterStatus) params.push('status=' + this.filterStatus);
                 if (params.length) url += '?' + params.join('&');
-                this.perangkatList = await this.api('GET', url);
-            } catch (e) {}
+                this.perangkatList = await this.api('GET', url) || [];
+            } catch (e) { this.perangkatList = []; }
         },
-        async loadDashboard() { try { this.stats = await this.api('GET', '/perangkat/dashboard/stats'); } catch (e) {} },
-        async loadAktivitas() {
+        async loadDashboard() {
             try {
-                let url = '/aktivitas/';
-                const params = [];
-                if (this.filterAktivitasTipe) params.push(`tipe=${this.filterAktivitasTipe}`);
-                if (params.length) url += '?' + params.join('&');
-                this.aktivitasList = await this.api('GET', url);
-            } catch (e) {}
+                const data = await this.api('GET', '/perangkat/dashboard/stats');
+                this.stats = { total: data.total || 0, per_cabang: data.per_cabang || [], per_status: data.per_status || [] };
+            } catch (e) { this.stats = { total: 0, per_cabang: [], per_status: [] }; }
+        },
+        async loadAktivitas() {
+            try { this.aktivitasList = await this.api('GET', '/aktivitas/') || []; }
+            catch (e) { this.aktivitasList = []; }
         },
 
         // MODAL
-        openModal(type) { this.modal = type; this.editMode = null; this.editId = null; this.form = {}; },
-        editItem(type, item) { this.modal = type; this.editMode = type; this.editId = item.id; this.form = { ...item }; },
+        openModal(type) {
+            this.modal = type;
+            this.editMode = null;
+            this.editId = null;
+            this.form = type === 'perangkat' ? { status: 'aktif' } : {};
+        },
+        editItem(type, item) {
+            this.modal = type;
+            this.editMode = type;
+            this.editId = item.id;
+            this.form = Object.assign({}, item);
+        },
         closeModal() {
             this.modal = null; this.editMode = null; this.editId = null; this.form = {};
             this.selectedItem = null; this.riwayatList = [];
@@ -143,7 +157,8 @@ function app() {
             this.loadRiwayat(item.id);
         },
         async loadRiwayat(perangkatId) {
-            try { this.riwayatList = await this.api('GET', `/aktivitas/perangkat/${perangkatId}`); } catch (e) { this.riwayatList = []; }
+            try { this.riwayatList = await this.api('GET', '/aktivitas/perangkat/' + perangkatId) || []; }
+            catch (e) { this.riwayatList = []; }
         },
 
         // CRUD
@@ -151,10 +166,10 @@ function app() {
             this.loading = true;
             try {
                 if (this.editMode === type) {
-                    await this.api('PUT', `/${type}/${this.editId}`, this.form);
+                    await this.api('PUT', '/' + type + '/' + this.editId, this.form);
                     this.showToast('Data berhasil diupdate', 'success');
                 } else {
-                    await this.api('POST', `/${type}/`, this.form);
+                    await this.api('POST', '/' + type + '/', this.form);
                     this.showToast('Data berhasil ditambahkan', 'success');
                 }
                 this.closeModal(); this.loadAll();
@@ -163,7 +178,7 @@ function app() {
         },
         async deleteItem(type, id) {
             if (!confirm('Yakin ingin menghapus data ini?')) return;
-            try { await this.api('DELETE', `/${type}/${id}`); this.showToast('Data berhasil dihapus', 'success'); this.loadAll(); }
+            try { await this.api('DELETE', '/' + type + '/' + id); this.showToast('Data berhasil dihapus', 'success'); this.loadAll(); }
             catch (e) { this.showToast(e.message, 'error'); }
         },
 
@@ -172,7 +187,7 @@ function app() {
             this.activityType = type;
             this.activityForm = {};
             const titles = { pindah: 'Pindah Cabang', pinjam: 'Pinjamkan Perangkat', maintenance: 'Masuk Maintenance' };
-            this.activityTitle = titles[type];
+            this.activityTitle = titles[type] || 'Aktivitas';
             this.modal = 'activity';
         },
         async submitActivity() {
@@ -183,25 +198,23 @@ function app() {
                 if (this.activityType === 'pindah') body = { cabang_tujuan_id: this.activityForm.cabang_tujuan_id, deskripsi: this.activityForm.deskripsi };
                 else if (this.activityType === 'pinjam') body = { peminjam: this.activityForm.peminjam, deskripsi: this.activityForm.deskripsi };
                 else if (this.activityType === 'maintenance') body = { deskripsi: this.activityForm.deskripsi };
-
-                await this.api('POST', `/perangkat/${id}/${this.activityType}`, body);
+                await this.api('POST', '/perangkat/' + id + '/' + this.activityType, body);
                 this.showToast('Aktivitas berhasil dicatat', 'success');
-                this.closeModal();
-                this.loadAll();
+                this.closeModal(); this.loadAll();
             } catch (e) { this.showToast(e.message, 'error'); }
             finally { this.loading = false; }
         },
         async kembalikan(id) {
             if (!confirm('Yakin ingin mengembalikan perangkat ini?')) return;
             this.loading = true;
-            try { await this.api('POST', `/perangkat/${id}/kembalikan`, {}); this.showToast('Perangkat berhasil dikembalikan', 'success'); this.closeModal(); this.loadAll(); }
+            try { await this.api('POST', '/perangkat/' + id + '/kembalikan', {}); this.showToast('Perangkat berhasil dikembalikan', 'success'); this.closeModal(); this.loadAll(); }
             catch (e) { this.showToast(e.message, 'error'); }
             finally { this.loading = false; }
         },
         async selesaiMaintenance(id) {
             if (!confirm('Maintenance sudah selesai?')) return;
             this.loading = true;
-            try { await this.api('POST', `/perangkat/${id}/selesai-maintenance`, {}); this.showToast('Maintenance selesai, perangkat aktif kembali', 'success'); this.closeModal(); this.loadAll(); }
+            try { await this.api('POST', '/perangkat/' + id + '/selesai-maintenance', {}); this.showToast('Maintenance selesai, perangkat aktif kembali', 'success'); this.closeModal(); this.loadAll(); }
             catch (e) { this.showToast(e.message, 'error'); }
             finally { this.loading = false; }
         },
@@ -209,27 +222,25 @@ function app() {
         // REPORT
         async applyReportFilter() {
             try {
-                let url = '/api/report/data?';
+                let url = '/report/data?';
                 const params = [];
-                if (this.reportCabang) params.push(`cabang_id=${this.reportCabang}`);
-                if (this.reportKategori) params.push(`kategori_id=${this.reportKategori}`);
-                if (this.reportStatus) params.push(`status=${this.reportStatus}`);
+                if (this.reportCabang) params.push('cabang_id=' + this.reportCabang);
+                if (this.reportKategori) params.push('kategori_id=' + this.reportKategori);
+                if (this.reportStatus) params.push('status=' + this.reportStatus);
                 url += params.join('&');
                 const res = await this.api('GET', url);
                 this.reportData = res.data || [];
-            } catch (e) { this.showToast(e.message, 'error'); }
+            } catch (e) { this.showToast(e.message, 'error'); this.reportData = []; }
         },
         async exportCSV() {
             try {
-                let url = '/api/report/export/csv?';
+                let url = '/report/export/csv?';
                 const params = [];
-                if (this.reportCabang) params.push(`cabang_id=${this.reportCabang}`);
-                if (this.reportKategori) params.push(`kategori_id=${this.reportKategori}`);
-                if (this.reportStatus) params.push(`status=${this.reportStatus}`);
+                if (this.reportCabang) params.push('cabang_id=' + this.reportCabang);
+                if (this.reportKategori) params.push('kategori_id=' + this.reportKategori);
+                if (this.reportStatus) params.push('status=' + this.reportStatus);
                 url += params.join('&');
-                const res = await fetch(`/api${url}`, {
-                    headers: { 'Authorization': `Bearer ${this.token}` }
-                });
+                const res = await fetch('/api' + url, { headers: { 'Authorization': 'Bearer ' + this.token } });
                 const blob = await res.blob();
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -240,15 +251,13 @@ function app() {
         },
         async exportPDF() {
             try {
-                let url = '/api/report/export/pdf?';
+                let url = '/report/export/pdf?';
                 const params = [];
-                if (this.reportCabang) params.push(`cabang_id=${this.reportCabang}`);
-                if (this.reportKategori) params.push(`kategori_id=${this.reportKategori}`);
-                if (this.reportStatus) params.push(`status=${this.reportStatus}`);
+                if (this.reportCabang) params.push('cabang_id=' + this.reportCabang);
+                if (this.reportKategori) params.push('kategori_id=' + this.reportKategori);
+                if (this.reportStatus) params.push('status=' + this.reportStatus);
                 url += params.join('&');
-                const res = await fetch(`/api${url}`, {
-                    headers: { 'Authorization': `Bearer ${this.token}` }
-                });
+                const res = await fetch('/api' + url, { headers: { 'Authorization': 'Bearer ' + this.token } });
                 const blob = await res.blob();
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -259,9 +268,9 @@ function app() {
         },
 
         // TOAST
-        showToast(message, type = 'info') {
-            this.toast = { show: true, type, message };
-            setTimeout(() => { this.toast.show = false; }, 3000);
-        },
+        showToast(message, type) {
+            this.toast = { show: true, type: type || 'info', message: message };
+            setTimeout(function() { this.toast.show = false; }.bind(this), 3000);
+        }
     };
 }

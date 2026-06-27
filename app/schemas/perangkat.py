@@ -2,37 +2,43 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-class PerangkatBase(BaseModel):
-    nama: str
+class PerangkatCreate(BaseModel):
     kategori_id: int
+    cabang_id: int
     merk: Optional[str] = None
-    model: Optional[str] = None
+    model: Optional[str] = None  # dipakai sebagai "Type" di UI
+    adjuro: Optional[str] = None
     serial_number: Optional[str] = None
     tahun_beli: Optional[int] = None
     status: Optional[str] = "aktif"
-    cabang_id: int
     lokasi_detail: Optional[str] = None
-
-
-class PerangkatCreate(PerangkatBase):
-    pass
 
 
 class PerangkatUpdate(BaseModel):
-    nama: Optional[str] = None
     kategori_id: Optional[int] = None
+    cabang_id: Optional[int] = None
     merk: Optional[str] = None
-    model: Optional[str] = None
+    model: Optional[str] = None  # dipakai sebagai "Type" di UI
+    adjuro: Optional[str] = None
     serial_number: Optional[str] = None
     tahun_beli: Optional[int] = None
     status: Optional[str] = None
-    cabang_id: Optional[int] = None
     lokasi_detail: Optional[str] = None
 
 
-class PerangkatResponse(PerangkatBase):
+class PerangkatResponse(BaseModel):
     id: int
     kode_unik: str
+    nama: str
+    kategori_id: int
+    cabang_id: int
+    merk: Optional[str] = None
+    model: Optional[str] = None
+    adjuro: Optional[str] = None
+    serial_number: Optional[str] = None
+    tahun_beli: Optional[int] = None
+    status: Optional[str] = None
+    lokasi_detail: Optional[str] = None
 
     class Config:
         from_attributes = True
