@@ -3,7 +3,7 @@ from typing import Optional
 
 
 class PerangkatCreate(BaseModel):
-    kategori_id: int
+    kategori_id: Optional[int] = None
     cabang_id: int
     merk: Optional[str] = None
     model: Optional[str] = None  # dipakai sebagai "Type" di UI

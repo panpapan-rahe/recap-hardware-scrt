@@ -6,10 +6,13 @@ from app.models.kategori import Kategori
 from app.models.aktivitas import Aktivitas
 
 
-def generate_kode_unik(db: Session, cabang_id: int, kategori_id: int) -> str:
+def generate_kode_unik(db: Session, cabang_id: int, kategori_id: int = None) -> str:
     cabang = db.query(Cabang).filter(Cabang.id == cabang_id).first()
-    kategori = db.query(Kategori).filter(Kategori.id == kategori_id).first()
-    prefix = kategori.nama[:3].upper() if kategori else "DEV"
+    if kategori_id:
+        kategori = db.query(Kategori).filter(Kategori.id == kategori_id).first()
+        prefix = kategori.nama[:3].upper() if kategori else "DEV"
+    else:
+        prefix = "DEV"
     count = db.query(func.count(Perangkat.id)).scalar() + 1
     return f"{cabang.kode}-{prefix}-{count:04d}"
 
@@ -19,14 +22,27 @@ def compose_nama(merk: str | None, model: str | None) -> str:
     return " ".join(parts) if parts else "Perangkat"
 
 
-def create_perangkat(db: Session, data: dict) -> Perangkat:
-    kode = generate_kode_unik(db, data["cabang_id"], data["kategori_id"])
+def create_perangkat(db: Session, data: dict, user_id: int = None) -> Perangkat:
+    kode = generate_kode_unik(db, data["cabang_id"], data.get("kategori_id"))
     payload = dict(data)
     payload["nama"] = compose_nama(payload.get("merk"), payload.get("model"))
     perangkat = Perangkat(**payload, kode_unik=kode)
     db.add(perangkat)
     db.commit()
     db.refresh(perangkat)
+
+    # Log aktivitas
+    if user_id:
+        aktivitas = Aktivitas(
+            perangkat_id=perangkat.id,
+            tipe="tambah",
+            deskripsi=f"Perangkat baru: {perangkat.nama} ({perangkat.kode_unik})",
+            user_id=user_id,
+            status_baru=perangkat.status,
+        )
+        db.add(aktivitas)
+        db.commit()
+
     return perangkat
 
 

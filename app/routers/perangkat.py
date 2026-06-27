@@ -12,6 +12,7 @@ from app.services.perangkat_service import (
     maintenance_perangkat, selesai_maintenance,
 )
 from app.deps import get_current_user
+from app.models.aktivitas import Aktivitas
 
 router = APIRouter(prefix="/perangkat", tags=["Perangkat"])
 
@@ -36,21 +37,55 @@ def detail_perangkat(perangkat_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=PerangkatResponse)
 def add_perangkat(data: PerangkatCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return create_perangkat(db, data.model_dump())
+    return create_perangkat(db, data.model_dump(), user.id)
 
 
 @router.put("/{perangkat_id}", response_model=PerangkatResponse)
-def edit_perangkat(perangkat_id: int, data: PerangkatUpdate, db: Session = Depends(get_db)):
-    perangkat = update_perangkat(db, perangkat_id, data.model_dump(exclude_unset=True))
+def edit_perangkat(perangkat_id: int, data: PerangkatUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    perangkat = get_perangkat_by_id(db, perangkat_id)
     if not perangkat:
         raise HTTPException(status_code=404, detail="Perangkat tidak ditemukan")
+    
+    update_data = data.model_dump(exclude_unset=True)
+    perangkat = update_perangkat(db, perangkat_id, update_data)
+    
+    # Log aktivitas
+    changes = []
+    if "status" in update_data:
+        changes.append(f"status: {perangkat.status} → {update_data['status']}")
+    if changes:
+        aktivitas = Aktivitas(
+            perangkat_id=perangkat_id,
+            tipe="edit",
+            deskripsi=f"Perangkat diedit: {perangkat.nama} ({', '.join(changes)})",
+            user_id=user.id,
+            status_sebelumnya=perangkat.status,
+            status_baru=update_data.get("status"),
+        )
+        db.add(aktivitas)
+        db.commit()
+    
     return perangkat
 
 
 @router.delete("/{perangkat_id}")
-def remove_perangkat(perangkat_id: int, db: Session = Depends(get_db)):
-    if not delete_perangkat(db, perangkat_id):
+def remove_perangkat(perangkat_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    perangkat = get_perangkat_by_id(db, perangkat_id)
+    if not perangkat:
         raise HTTPException(status_code=404, detail="Perangkat tidak ditemukan")
+    
+    # Log aktivitas sebelum hapus
+    aktivitas = Aktivitas(
+        perangkat_id=perangkat_id,
+        tipe="hapus",
+        deskripsi=f"Perangkat dihapus: {perangkat.nama} ({perangkat.kode_unik})",
+        user_id=user.id,
+        status_sebelumnya=perangkat.status,
+    )
+    db.add(aktivitas)
+    
+    db.delete(perangkat)
+    db.commit()
     return {"message": "Perangkat berhasil dihapus"}
 
 

@@ -20,15 +20,33 @@
     {% block scripts %}{% endblock %}
 
     <script>
-        // Display user name in navbar
-        const user = Auth.getUser();
-        if (user) {
-            document.getElementById('userDisplay').textContent = user.nama_lengkap || user.username;
-            if (user.role === 'admin') {
-                document.getElementById('adminLink').style.display = '';
-                document.getElementById('cabangLink').style.display = '';
+        // Display user name in navbar & show admin-only links
+        async function initNavbar() {
+            const user = Auth.getUser();
+            if (user) {
+                document.getElementById('userDisplay').textContent = user.nama_lengkap || user.username;
+                if (user.role === 'admin') {
+                    document.getElementById('adminLink').style.display = '';
+                    document.getElementById('cabangLink').style.display = '';
+                }
+            } else {
+                // User not in localStorage yet, try fetching from API
+                try {
+                    await Auth.fetchMe();
+                    const freshUser = Auth.getUser();
+                    if (freshUser) {
+                        document.getElementById('userDisplay').textContent = freshUser.nama_lengkap || freshUser.username;
+                        if (freshUser.role === 'admin') {
+                            document.getElementById('adminLink').style.display = '';
+                            document.getElementById('cabangLink').style.display = '';
+                        }
+                    }
+                } catch (e) {
+                    // not logged in, stay on login
+                }
             }
         }
+        initNavbar();
     </script>
 </body>
 </html>
