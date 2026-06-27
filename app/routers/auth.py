@@ -8,7 +8,7 @@ from app.services.auth_service import (
 )
 from app.deps import get_current_user
 
-router = APIRouter(prefix="/api/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 
 @router.post("/register", response_model=UserResponse)

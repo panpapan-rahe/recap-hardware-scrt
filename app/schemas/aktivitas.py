@@ -20,9 +20,7 @@ class AktivitasCreate(AktivitasBase):
 class AktivitasResponse(AktivitasBase):
     id: int
     user_id: int
-    username: str
-    perangkat_kode: str
-    perangkat_nama: str
+    target_user_id: Optional[int] = None
 
     class Config:
         from_attributes = True

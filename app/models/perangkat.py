@@ -10,7 +10,7 @@ class Perangkat(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     kode_unik = Column(String(20), unique=True, nullable=False)
     nama = Column(String(100), nullable=False)
-    kategori_id = Column(Integer, ForeignKey("kategori.id"), nullable=False)
+    kategori_id = Column(Integer, ForeignKey("kategori.id"), nullable=True)
     merk = Column(String(50))
     model = Column(String(50))
     adjuro = Column(String(100))

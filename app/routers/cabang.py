@@ -5,7 +5,7 @@ from app.models.cabang import Cabang
 from app.schemas.cabang import CabangCreate, CabangUpdate, CabangResponse
 from app.deps import require_admin
 
-router = APIRouter(prefix="/cabang", tags=["Cabang"])
+router = APIRouter(tags=["Cabang"])
 
 
 @router.get("/", response_model=list[CabangResponse])

@@ -61,14 +61,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Templates
 templates = Jinja2Templates(directory="templates")
 
-# Register routers (prefix already set in each router)
-app.include_router(auth_router)
-app.include_router(cabang_router)
-app.include_router(kategori_router)
-app.include_router(perangkat_router)
-app.include_router(aktivitas_router)
-app.include_router(report_router)
-app.include_router(admin_router)
+# Register routers
+app.include_router(auth_router, prefix="/api/auth")
+app.include_router(cabang_router, prefix="/api/cabang")
+app.include_router(kategori_router, prefix="/api/kategori")
+app.include_router(perangkat_router, prefix="/api/perangkat")
+app.include_router(aktivitas_router, prefix="/api/aktivitas")
+app.include_router(report_router, prefix="/api/report")
+app.include_router(admin_router, prefix="/api/admin")
 
 
 @app.get("/", response_class=HTMLResponse)

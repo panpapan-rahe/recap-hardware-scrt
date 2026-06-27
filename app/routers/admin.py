@@ -9,7 +9,7 @@ from app.services.auth_service import (
 )
 from app.deps import require_admin
 
-router = APIRouter(prefix="/api/admin", tags=["Admin"])
+router = APIRouter(tags=["Admin"])
 
 
 @router.get("/users", response_model=list[UserResponse])

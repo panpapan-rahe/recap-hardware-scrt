@@ -14,7 +14,7 @@ from app.services.perangkat_service import (
 from app.deps import get_current_user
 from app.models.aktivitas import Aktivitas
 
-router = APIRouter(prefix="/perangkat", tags=["Perangkat"])
+router = APIRouter(tags=["Perangkat"])
 
 
 @router.get("/", response_model=list[PerangkatResponse])

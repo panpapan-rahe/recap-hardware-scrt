@@ -5,7 +5,7 @@ from app.models.kategori import Kategori
 from app.schemas.kategori import KategoriCreate, KategoriUpdate, KategoriResponse
 from app.deps import get_current_user
 
-router = APIRouter(prefix="/kategori", tags=["Kategori"])
+router = APIRouter(tags=["Kategori"])
 
 
 @router.get("/", response_model=list[KategoriResponse])

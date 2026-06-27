@@ -5,7 +5,7 @@ from app.schemas.aktivitas import AktivitasCreate, AktivitasResponse
 from app.services.aktivitas_service import create_aktivitas, get_aktivitas_by_perangkat, get_all_aktivitas
 from app.deps import get_current_user
 
-router = APIRouter(prefix="/aktivitas", tags=["Aktivitas"])
+router = APIRouter(tags=["Aktivitas"])
 
 
 @router.get("/perangkat/{perangkat_id}", response_model=list[AktivitasResponse])

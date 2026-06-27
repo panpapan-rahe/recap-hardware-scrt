@@ -44,10 +44,9 @@ function renderTable(data) {
     tbody.innerHTML = data.map(item => `
         <tr>
             <td>${Auth.formatDate(item.created_at)}</td>
-            <td>${item.perangkat_kode || '-'}</td>
-            <td><span class="badge">${item.tipe}</span></td>
+            <td>${item.tipe}</td>
             <td>${item.deskripsi || '-'}</td>
-            <td>${item.username || '-'}</td>
+            <td>${item.user_id || '-'}</td>
         </tr>
     `).join('');
 }

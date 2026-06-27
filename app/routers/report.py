@@ -5,7 +5,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.services.report_service import get_report_data, generate_csv, generate_pdf
 
-router = APIRouter(prefix="/report", tags=["Report"])
+router = APIRouter(tags=["Report"])
 
 
 @router.get("/data")

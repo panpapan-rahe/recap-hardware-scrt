@@ -215,7 +215,7 @@ function renderRiwayat() {
             <td>${Auth.formatDate(a.created_at)}</td>
             <td><span class="badge">${a.tipe}</span></td>
             <td>${a.deskripsi || '-'}</td>
-            <td>${a.username || '-'}</td>
+            <td>${a.user_id || '-'}</td>
         </tr>
     `).join('');
 }

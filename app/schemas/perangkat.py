@@ -30,7 +30,7 @@ class PerangkatResponse(BaseModel):
     id: int
     kode_unik: str
     nama: str
-    kategori_id: int
+    kategori_id: Optional[int] = None
     cabang_id: int
     merk: Optional[str] = None
     model: Optional[str] = None
