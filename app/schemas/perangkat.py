@@ -31,6 +31,7 @@ class PerangkatResponse(BaseModel):
     kode_unik: str
     nama: str
     kategori_id: Optional[int] = None
+    kategori_nama: Optional[str] = None
     cabang_id: int
     merk: Optional[str] = None
     model: Optional[str] = None
@@ -45,7 +46,7 @@ class PerangkatResponse(BaseModel):
 
 
 class PerangkatDetail(PerangkatResponse):
-    kategori_nama: str
+    kategori_nama: Optional[str] = None
     cabang_nama: str
     cabang_kode: str
 

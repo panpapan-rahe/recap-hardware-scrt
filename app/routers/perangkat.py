@@ -13,8 +13,16 @@ from app.services.perangkat_service import (
 )
 from app.deps import get_current_user
 from app.models.aktivitas import Aktivitas
+from app.models.kategori import Kategori
 
 router = APIRouter(tags=["Perangkat"])
+
+
+def enrich_perangkat_response(db: Session, perangkat) -> dict:
+    data = PerangkatResponse.model_validate(perangkat).model_dump()
+    kategori = db.query(Kategori).filter(Kategori.id == perangkat.kategori_id).first() if perangkat.kategori_id else None
+    data["kategori_nama"] = kategori.nama if kategori else None
+    return data
 
 
 @router.get("/", response_model=list[PerangkatResponse])
@@ -24,7 +32,8 @@ def list_perangkat(
     status: str = Query(None),
     db: Session = Depends(get_db),
 ):
-    return get_perangkat_list(db, cabang_id, kategori_id, status)
+    perangkat_list = get_perangkat_list(db, cabang_id, kategori_id, status)
+    return [enrich_perangkat_response(db, p) for p in perangkat_list]
 
 
 @router.get("/{perangkat_id}", response_model=PerangkatResponse)
@@ -32,12 +41,13 @@ def detail_perangkat(perangkat_id: int, db: Session = Depends(get_db)):
     perangkat = get_perangkat_by_id(db, perangkat_id)
     if not perangkat:
         raise HTTPException(status_code=404, detail="Perangkat tidak ditemukan")
-    return perangkat
+    return enrich_perangkat_response(db, perangkat)
 
 
 @router.post("/", response_model=PerangkatResponse)
 def add_perangkat(data: PerangkatCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return create_perangkat(db, data.model_dump(), user.id)
+    perangkat = create_perangkat(db, data.model_dump(), user.id)
+    return enrich_perangkat_response(db, perangkat)
 
 
 @router.put("/{perangkat_id}", response_model=PerangkatResponse)
@@ -65,7 +75,7 @@ def edit_perangkat(perangkat_id: int, data: PerangkatUpdate, db: Session = Depen
         db.add(aktivitas)
         db.commit()
     
-    return perangkat
+    return enrich_perangkat_response(db, perangkat)
 
 
 @router.delete("/{perangkat_id}")

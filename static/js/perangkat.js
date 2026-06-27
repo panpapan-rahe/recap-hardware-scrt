@@ -1,5 +1,6 @@
 // PERANGKAT PAGE LOGIC
 let cabangList = [];
+let kategoriList = [];
 let perangkatList = [];
 let selectedItem = null;
 let riwayatList = [];
@@ -7,6 +8,7 @@ let loading = false;
 
 async function init() {
     await loadCabang();
+    await loadKategori();
     await loadPerangkat();
     await loadAktivitas();
 }
@@ -19,6 +21,29 @@ async function loadCabang() {
     } catch (e) {
         // silent
     }
+}
+
+async function loadKategori() {
+    try {
+        kategoriList = await Auth.api('GET', '/kategori/') || [];
+        populateKategoriDropdowns();
+    } catch (e) {
+        // silent
+    }
+}
+
+function populateKategoriDropdowns() {
+    const formEl = document.getElementById('formKategori');
+    const options = kategoriList.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
+    if (formEl) {
+        formEl.innerHTML = '<option value="">Pilih Kategori</option>' + options;
+    }
+}
+
+function getNamaKategori(id) {
+    if (!id) return '-';
+    const k = kategoriList.find(x => x.id == id);
+    return k ? k.nama : id;
 }
 
 function populateCabangDropdowns() {
@@ -74,6 +99,7 @@ function renderTable() {
             <td>${item.kode_unik}</td>
             <td>${item.nama}</td>
             <td>${(item.merk || '') + ' ' + (item.model || '')}</td>
+            <td>${getNamaKategori(item.kategori_id)}</td>
             <td>${getNamaCabang(item.cabang_id)}</td>
             <td><span class="badge badge-${item.status}">${item.status}</span></td>
             <td class="col-actions">
@@ -91,6 +117,7 @@ function openModal() {
     document.getElementById('perangkatForm').reset();
     document.getElementById('editId').value = '';
     document.getElementById('formStatus').value = 'aktif';
+    document.getElementById('formKategori').value = '';
 }
 
 function editItem(id) {
@@ -100,6 +127,7 @@ function editItem(id) {
     document.getElementById('modalTitle').textContent = 'Edit Perangkat';
     document.getElementById('editId').value = item.id;
     document.getElementById('formCabang').value = item.cabang_id;
+    document.getElementById('formKategori').value = item.kategori_id || '';
     document.getElementById('formStatus').value = item.status;
     document.getElementById('formMerk').value = item.merk || '';
     document.getElementById('formType').value = item.model || '';
@@ -116,6 +144,7 @@ async function saveItem() {
     const editId = document.getElementById('editId').value;
     const body = {
         cabang_id: parseInt(document.getElementById('formCabang').value),
+        kategori_id: document.getElementById('formKategori').value ? parseInt(document.getElementById('formKategori').value) : null,
         status: document.getElementById('formStatus').value,
         merk: document.getElementById('formMerk').value.trim(),
         model: document.getElementById('formType').value.trim(),
@@ -174,6 +203,7 @@ async function detailPerangkat(id) {
         <tr><td><strong>Nama</strong></td><td>${item.nama}</td></tr>
         <tr><td><strong>Merk</strong></td><td>${item.merk || '-'}</td></tr>
         <tr><td><strong>Type</strong></td><td>${item.model || '-'}</td></tr>
+        <tr><td><strong>Kategori</strong></td><td>${getNamaKategori(item.kategori_id)}</td></tr>
         <tr><td><strong>Adjuro</strong></td><td>${item.adjuro || '-'}</td></tr>
         <tr><td><strong>Serial Number</strong></td><td>${item.serial_number || '-'}</td></tr>
         <tr><td><strong>Cabang</strong></td><td>${getNamaCabang(item.cabang_id)}</td></tr>
