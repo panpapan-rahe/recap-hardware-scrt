@@ -8,6 +8,7 @@ class Cabang(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     kode = Column(String(10), unique=True, nullable=False)
+    inisial = Column(String(10))
     nama = Column(String(100), nullable=False)
     alamat = Column(Text)
     created_at = Column(DateTime, server_default=func.now())

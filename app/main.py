@@ -36,6 +36,11 @@ def ensure_sqlite_schema():
         if "adjuro" not in col_names:
             conn.exec_driver_sql("ALTER TABLE perangkat ADD COLUMN adjuro VARCHAR(100)")
 
+        cabang_cols = conn.exec_driver_sql("PRAGMA table_info(cabang)").fetchall()
+        cabang_names = {row[1] for row in cabang_cols}
+        if "inisial" not in cabang_names:
+            conn.exec_driver_sql("ALTER TABLE cabang ADD COLUMN inisial VARCHAR(10)")
+
 
 ensure_sqlite_schema()
 

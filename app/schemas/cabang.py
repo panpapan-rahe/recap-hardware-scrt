@@ -4,6 +4,7 @@ from typing import Optional
 
 class CabangBase(BaseModel):
     kode: str
+    inisial: Optional[str] = None
     nama: str
     alamat: Optional[str] = None
 
@@ -14,6 +15,7 @@ class CabangCreate(CabangBase):
 
 class CabangUpdate(BaseModel):
     kode: Optional[str] = None
+    inisial: Optional[str] = None
     nama: Optional[str] = None
     alamat: Optional[str] = None
 
