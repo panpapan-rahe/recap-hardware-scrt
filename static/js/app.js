@@ -110,7 +110,12 @@ function app() {
         async loadAll() {
             await Promise.all([this.loadCabang(), this.loadKategori(), this.loadPerangkat(), this.loadDashboard(), this.loadAktivitas()]);
         },
-        async loadCabang() { try { this.cabangList = await this.api('GET', '/cabang/') || []; } catch (e) { this.cabangList = []; } },
+        async loadCabang() {
+            try {
+                this.cabangList = await this.api('GET', '/cabang/') || [];
+                this.cabangList.sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
+            } catch (e) { this.cabangList = []; }
+        },
         async loadKategori() { try { this.kategoriList = await this.api('GET', '/kategori/') || []; } catch (e) { this.kategoriList = []; } },
         async loadPerangkat() {
             try {

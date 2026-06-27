@@ -89,13 +89,14 @@
             </div>
             <table class="data-table">
                 <thead>
-                    <tr><th>No</th><th>Kode</th><th>Nama</th><th>Alamat</th><th>Aksi</th></tr>
+                    <tr><th>No</th><th>Kode Cabang</th><th>Inisial Cabang</th><th>Nama Cabang</th><th>Alamat Cabang</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
                     <template x-for="(item, idx) in cabangList" :key="item.id">
                         <tr>
                             <td><span x-text="idx + 1"></span></td>
                             <td><span x-text="item.kode"></span></td>
+                            <td><span x-text="item.inisial || '-'"></span></td>
                             <td><span x-text="item.nama"></span></td>
                             <td><span x-text="item.alamat || '-'"></span></td>
                             <td>
