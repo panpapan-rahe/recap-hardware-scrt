@@ -3,18 +3,18 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.cabang import Cabang
 from app.schemas.cabang import CabangCreate, CabangUpdate, CabangResponse
-from app.deps import get_current_user_id
+from app.deps import get_current_user
 
 router = APIRouter(prefix="/cabang", tags=["Cabang"])
 
 
 @router.get("/", response_model=list[CabangResponse])
-def list_cabang(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+def list_cabang(db: Session = Depends(get_db)):
     return db.query(Cabang).order_by(Cabang.kode).all()
 
 
 @router.post("/", response_model=CabangResponse)
-def create_cabang(data: CabangCreate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+def create_cabang(data: CabangCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
     cabang = Cabang(**data.model_dump())
     db.add(cabang)
     db.commit()
@@ -23,7 +23,7 @@ def create_cabang(data: CabangCreate, db: Session = Depends(get_db), user_id: in
 
 
 @router.put("/{cabang_id}", response_model=CabangResponse)
-def update_cabang(cabang_id: int, data: CabangUpdate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+def update_cabang(cabang_id: int, data: CabangUpdate, db: Session = Depends(get_db)):
     cabang = db.query(Cabang).filter(Cabang.id == cabang_id).first()
     if not cabang:
         raise HTTPException(status_code=404, detail="Cabang tidak ditemukan")
@@ -35,7 +35,7 @@ def update_cabang(cabang_id: int, data: CabangUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{cabang_id}")
-def delete_cabang(cabang_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+def delete_cabang(cabang_id: int, db: Session = Depends(get_db)):
     cabang = db.query(Cabang).filter(Cabang.id == cabang_id).first()
     if not cabang:
         raise HTTPException(status_code=404, detail="Cabang tidak ditemukan")

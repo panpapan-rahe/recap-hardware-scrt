@@ -20,6 +20,10 @@ const Auth = {
     isLoggedIn() {
         return !!this.getToken();
     },
+    isAdmin() {
+        const user = this.getUser();
+        return user && user.role === 'admin';
+    },
     async api(method, url, body = null) {
         const opts = { method, headers: { 'Content-Type': 'application/json' } };
         const token = this.getToken();
@@ -27,6 +31,7 @@ const Auth = {
         if (body) opts.body = JSON.stringify(body);
         const res = await fetch('/api' + url, opts);
         if (res.status === 401) { this.logout(); throw new Error('Unauthorized'); }
+        if (res.status === 403) { throw new Error('Akses ditolak'); }
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Error');
         return data;

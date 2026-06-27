@@ -6,9 +6,9 @@ from app.schemas.user import UserCreate, UserLogin, UserResponse, Token
 from app.services.auth_service import (
     authenticate_user, create_user, create_access_token, get_user_by_id,
 )
-from app.deps import get_current_user_id
+from app.deps import get_current_user
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 
 @router.post("/register", response_model=UserResponse)
@@ -28,8 +28,5 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 
 
 @router.get("/me", response_model=UserResponse)
-def me(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
-    user = get_user_by_id(db, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User tidak ditemukan")
+def me(user: User = Depends(get_current_user)):
     return user

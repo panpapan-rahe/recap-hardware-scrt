@@ -14,12 +14,12 @@ def seed():
         if not db.query(User).filter(User.username == "admin").first():
             admin = User(
                 username="admin",
-                password_hash=hash_password("admin123"),
+                password_hash=hash_password("admin"),
                 nama_lengkap="Administrator",
                 role="admin",
             )
             db.add(admin)
-            print("✅ Admin user created: admin / admin123")
+            print("✅ Admin user created: admin / admin")
 
         # Buat sample cabang
         cabang_data = [

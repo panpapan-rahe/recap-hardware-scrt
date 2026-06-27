@@ -6,7 +6,13 @@ class UserCreate(BaseModel):
     username: str
     password: str
     nama_lengkap: str
-    role: Optional[str] = "viewer"
+    role: Optional[str] = "pic"
+
+
+class UserUpdate(BaseModel):
+    nama_lengkap: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 class UserLogin(BaseModel):
@@ -19,6 +25,7 @@ class UserResponse(BaseModel):
     username: str
     nama_lengkap: str
     role: str
+    is_active: bool
 
     class Config:
         from_attributes = True

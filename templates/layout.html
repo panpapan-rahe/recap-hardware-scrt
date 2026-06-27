@@ -24,6 +24,9 @@
         const user = Auth.getUser();
         if (user) {
             document.getElementById('userDisplay').textContent = user.nama_lengkap || user.username;
+            if (user.role === 'admin') {
+                document.getElementById('adminLink').style.display = '';
+            }
         }
     </script>
 </body>

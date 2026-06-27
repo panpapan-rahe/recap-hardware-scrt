@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.deps import get_current_user_id
+from app.deps import get_current_user
 from app.services.report_service import get_report_data, generate_csv, generate_pdf
 
 router = APIRouter(prefix="/report", tags=["Report"])
@@ -14,7 +14,6 @@ def report_data(
     kategori_id: int = Query(None),
     status: str = Query(None),
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
 ):
     data = get_report_data(db, cabang_id, kategori_id, status)
     return {
@@ -44,7 +43,6 @@ def export_csv(
     kategori_id: int = Query(None),
     status: str = Query(None),
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
 ):
     data = get_report_data(db, cabang_id, kategori_id, status)
     csv_content = generate_csv(data)
@@ -61,7 +59,6 @@ def export_pdf(
     kategori_id: int = Query(None),
     status: str = Query(None),
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
 ):
     data = get_report_data(db, cabang_id, kategori_id, status)
     title = "Report Perangkat IT"

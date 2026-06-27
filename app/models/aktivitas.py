@@ -8,16 +8,18 @@ class Aktivitas(Base):
     __tablename__ = "aktivitas"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    perangkat_id = Column(Integer, ForeignKey("perangkat.id"), nullable=False)
+    perangkat_id = Column(Integer, ForeignKey("perangkat.id"), nullable=True)
     tipe = Column(String(30), nullable=False)
     deskripsi = Column(Text)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    cabang_asal_id = Column(Integer, ForeignKey("cabang.id"))
-    cabang_tujuan_id = Column(Integer, ForeignKey("cabang.id"))
+    cabang_asal_id = Column(Integer, ForeignKey("cabang.id"), nullable=True)
+    cabang_tujuan_id = Column(Integer, ForeignKey("cabang.id"), nullable=True)
     peminjam = Column(String(100))
     status_sebelumnya = Column(String(20))
     status_baru = Column(String(20))
+    target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
     perangkat = relationship("Perangkat")
-    user = relationship("User")
+    user = relationship("User", foreign_keys=[user_id])
+    target_user = relationship("User", foreign_keys=[target_user_id])

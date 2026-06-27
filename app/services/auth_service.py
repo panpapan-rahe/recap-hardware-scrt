@@ -27,12 +27,12 @@ def decode_token(token: str) -> dict:
 
 def authenticate_user(db: Session, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()
-    if user and verify_password(password, user.password_hash):
+    if user and user.is_active and verify_password(password, user.password_hash):
         return user
     return None
 
 
-def create_user(db: Session, username: str, password: str, nama_lengkap: str, role: str = "viewer"):
+def create_user(db: Session, username: str, password: str, nama_lengkap: str, role: str = "pic"):
     user = User(
         username=username,
         password_hash=hash_password(password),
@@ -47,3 +47,29 @@ def create_user(db: Session, username: str, password: str, nama_lengkap: str, ro
 
 def get_user_by_id(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
+
+
+def get_all_users(db: Session):
+    return db.query(User).order_by(User.created_at.desc()).all()
+
+
+def update_user(db: Session, user_id: int, **kwargs):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return None
+    for key, value in kwargs.items():
+        if value is not None and hasattr(user, key):
+            setattr(user, key, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def deactivate_user(db: Session, user_id: int):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return None
+    user.is_active = False
+    db.commit()
+    db.refresh(user)
+    return user

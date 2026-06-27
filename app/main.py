@@ -14,6 +14,7 @@ from app.routers import (
     perangkat_router,
     aktivitas_router,
     report_router,
+    admin_router,
 )
 from app.config import DATABASE_URL
 
@@ -67,6 +68,7 @@ app.include_router(kategori_router, prefix="/api")
 app.include_router(perangkat_router, prefix="/api")
 app.include_router(aktivitas_router, prefix="/api")
 app.include_router(report_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -96,6 +98,10 @@ def aktivitas_page(request: Request):
 @app.get("/report.html", response_class=HTMLResponse)
 def report_page(request: Request):
     return templates.TemplateResponse(request=request, name="report.html")
+
+@app.get("/admin.html", response_class=HTMLResponse)
+def admin_page(request: Request):
+    return templates.TemplateResponse(request=request, name="admin.html")
 
 
 @app.get("/health")
