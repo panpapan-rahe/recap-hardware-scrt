@@ -1,0 +1,152 @@
+{% extends "layout.html" %}
+{% block title %}Report - Recap Hardware{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Report & Export</h2>
+    <div class="action-buttons">
+        <button onclick="exportCSV()" class="btn btn-success btn-sm">📊 Export CSV</button>
+        <button onclick="exportPDF()" class="btn btn-danger btn-sm">📄 Export PDF</button>
+    </div>
+</div>
+
+<div class="filters">
+    <select id="reportCabang" onchange="applyFilter()" class="form-control">
+        <option value="">Semua Cabang</option>
+    </select>
+    <select id="reportStatus" onchange="applyFilter()" class="form-control">
+        <option value="">Semua Status</option>
+        <option value="aktif">Aktif</option>
+        <option value="dipinjam">Dipinjam</option>
+        <option value="maintenance">Maintenance</option>
+        <option value="mutasi">Mutasi</option>
+        <option value="retired">Retired</option>
+    </select>
+</div>
+
+<p class="text-muted">Total: <span id="reportTotal">0</span> perangkat</p>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Kode</th>
+            <th>Nama</th>
+            <th>Merk/Type</th>
+            <th>Cabang</th>
+            <th>Lokasi</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody id="reportTable">
+    </tbody>
+</table>
+<p id="emptyMsg" class="text-muted text-center" style="display:none;">Tidak ada data untuk filter yang dipilih.</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cabangList = [];
+
+async function init() {
+    await loadCabang();
+    await applyFilter();
+}
+
+async function loadCabang() {
+    try {
+        cabangList = await Auth.api('GET', '/cabang/') || [];
+        const options = cabangList.map(c => `<option value="${c.id}">${c.nama}</option>`).join('');
+        document.getElementById('reportCabang').innerHTML = '<option value="">Semua Cabang</option>' + options;
+    } catch (e) {
+        // silent
+    }
+}
+
+async function applyFilter() {
+    try {
+        let url = '/report/data?';
+        const params = [];
+        const cabang = document.getElementById('reportCabang').value;
+        const status = document.getElementById('reportStatus').value;
+        if (cabang) params.push('cabang_id=' + cabang);
+        if (status) params.push('status=' + status);
+        url += params.join('&');
+
+        const res = await Auth.api('GET', url);
+        const data = res.data || [];
+        document.getElementById('reportTotal').textContent = data.length;
+        renderTable(data);
+    } catch (e) {
+        Auth.showToast(e.message, 'error');
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('reportTable');
+    const emptyMsg = document.getElementById('emptyMsg');
+
+    if (data.length === 0) {
+        tbody.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        return;
+    }
+    emptyMsg.style.display = 'none';
+
+    tbody.innerHTML = data.map(item => `
+        <tr>
+            <td>${item.kode_unik}</td>
+            <td>${item.nama}</td>
+            <td>${(item.merk || '') + ' ' + (item.model || '')}</td>
+            <td>${item.cabang}</td>
+            <td>${item.lokasi_detail || '-'}</td>
+            <td><span class="badge badge-${item.status}">${item.status}</span></td>
+        </tr>
+    `).join('');
+}
+
+async function exportCSV() {
+    try {
+        let url = '/report/export/csv?';
+        const params = [];
+        const cabang = document.getElementById('reportCabang').value;
+        const status = document.getElementById('reportStatus').value;
+        if (cabang) params.push('cabang_id=' + cabang);
+        if (status) params.push('status=' + status);
+        url += params.join('&');
+
+        const res = await fetch('/api' + url, { headers: { 'Authorization': 'Bearer ' + Auth.getToken() } });
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'report_perangkat.csv';
+        a.click();
+        Auth.showToast('CSV berhasil diunduh', 'success');
+    } catch (e) {
+        Auth.showToast('Gagal export CSV', 'error');
+    }
+}
+
+async function exportPDF() {
+    try {
+        let url = '/report/export/pdf?';
+        const params = [];
+        const cabang = document.getElementById('reportCabang').value;
+        const status = document.getElementById('reportStatus').value;
+        if (cabang) params.push('cabang_id=' + cabang);
+        if (status) params.push('status=' + status);
+        url += params.join('&');
+
+        const res = await fetch('/api' + url, { headers: { 'Authorization': 'Bearer ' + Auth.getToken() } });
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'report_perangkat.pdf';
+        a.click();
+        Auth.showToast('PDF berhasil diunduh', 'success');
+    } catch (e) {
+        Auth.showToast('Gagal export PDF', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+{% endblock %}

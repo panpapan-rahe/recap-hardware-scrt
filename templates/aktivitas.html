@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block title %}Aktivitas - Recap Hardware{% endblock %}
+{% block content %}
+<h2>Log Aktivitas</h2>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Waktu</th>
+            <th>Perangkat</th>
+            <th>Tipe</th>
+            <th>Deskripsi</th>
+            <th>User</th>
+        </tr>
+    </thead>
+    <tbody id="aktivitasTable">
+    </tbody>
+</table>
+<p id="emptyMsg" class="text-muted text-center" style="display:none;">Belum ada aktivitas.</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadAktivitas() {
+    try {
+        const data = await Auth.api('GET', '/aktivitas/') || [];
+        renderTable(data);
+    } catch (e) {
+        Auth.showToast('Gagal memuat data aktivitas', 'error');
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('aktivitasTable');
+    const emptyMsg = document.getElementById('emptyMsg');
+
+    if (data.length === 0) {
+        tbody.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        return;
+    }
+    emptyMsg.style.display = 'none';
+
+    tbody.innerHTML = data.map(item => `
+        <tr>
+            <td>${Auth.formatDate(item.created_at)}</td>
+            <td>${item.perangkat_kode || '-'}</td>
+            <td><span class="badge">${item.tipe}</span></td>
+            <td>${item.deskripsi || '-'}</td>
+            <td>${item.username || '-'}</td>
+        </tr>
+    `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', loadAktivitas);
+</script>
+{% endblock %}

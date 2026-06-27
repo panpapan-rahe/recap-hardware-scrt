@@ -1,0 +1,135 @@
+{% extends "layout.html" %}
+{% block title %}Perangkat - Recap Hardware{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Perangkat</h2>
+    <button onclick="openModal()" class="btn btn-primary">+ Tambah Perangkat</button>
+</div>
+
+<div class="filters">
+    <select id="filterCabang" onchange="loadPerangkat()" class="form-control">
+        <option value="">Semua Cabang</option>
+    </select>
+    <select id="filterStatus" onchange="loadPerangkat()" class="form-control">
+        <option value="">Semua Status</option>
+        <option value="aktif">Aktif</option>
+        <option value="dipinjam">Dipinjam</option>
+        <option value="maintenance">Maintenance</option>
+        <option value="mutasi">Mutasi</option>
+        <option value="retired">Retired</option>
+    </select>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Kode</th>
+            <th>Nama</th>
+            <th>Merk/Type</th>
+            <th>Cabang</th>
+            <th>Status</th>
+            <th class="col-actions"></th>
+        </tr>
+    </thead>
+    <tbody id="perangkatTable">
+    </tbody>
+</table>
+<p id="emptyMsg" class="text-muted text-center" style="display:none;">Belum ada data perangkat.</p>
+
+<!-- MODAL PERANGKAT -->
+<div class="modal-overlay" id="perangkatModal" style="display:none;">
+    <div class="modal modal-lg">
+        <h3 id="modalTitle">Tambah Perangkat</h3>
+        <form id="perangkatForm">
+            <input type="hidden" id="editId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cabang</label>
+                    <select id="formCabang" required>
+                        <option value="">Pilih Cabang</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="formStatus">
+                        <option value="aktif">Aktif</option>
+                        <option value="dipinjam">Dipinjam</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="mutasi">Mutasi</option>
+                        <option value="retired">Retired</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Merk</label><input type="text" id="formMerk" placeholder="Contoh: HP, Epson, Dell"></div>
+                <div class="form-group"><label>Type</label><input type="text" id="formType" placeholder="Contoh: ProBook 440 G9"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Serial Number</label><input type="text" id="formSN"></div>
+                <div class="form-group"><label>Adjuro <span class="text-muted">(Opsional)</span></label><input type="text" id="formAdjuro" placeholder="Kode internal / asset tambahan"></div>
+            </div>
+            <div class="form-group">
+                <label>Lokasi Detail</label>
+                <input type="text" id="formLokasi" placeholder="Ruangan / Lantai">
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
+                <button type="submit" class="btn btn-primary" id="saveBtn">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="modal-overlay" id="detailModal" style="display:none;" onclick="if(event.target===this)closeDetailModal()">
+    <div class="modal modal-lg">
+        <h3>Detail Perangkat</h3>
+        <table class="detail-table" id="detailTable"></table>
+
+        <div id="activityActions" style="display:none;">
+            <h4 class="mt-4">Aksi Aktivitas</h4>
+            <div class="action-buttons">
+                <button onclick="openActivityModal('pindah')" class="btn btn-primary btn-sm">📍 Pindah Cabang</button>
+                <button onclick="openActivityModal('pinjam')" id="btnPinjam" class="btn btn-warning btn-sm">📋 Pinjamkan</button>
+                <button onclick="kembalikan()" id="btnKembalikan" class="btn btn-success btn-sm" style="display:none;">✅ Kembalikan</button>
+                <button onclick="openActivityModal('maintenance')" id="btnMaintenance" class="btn btn-danger btn-sm">🔧 Maintenance</button>
+                <button onclick="selesaiMaintenance()" id="btnSelesaiMaintenance" class="btn btn-success btn-sm" style="display:none;">✅ Selesai Maintenance</button>
+            </div>
+        </div>
+
+        <h4 class="mt-4">Riwayat Aktivitas</h4>
+        <table class="data-table mt-3">
+            <thead><tr><th>Waktu</th><th>Tipe</th><th>Deskripsi</th><th>User</th></tr></thead>
+            <tbody id="riwayatTable"></tbody>
+        </table>
+        <p id="riwayatEmpty" class="text-muted text-center" style="display:none;">Belum ada riwayat aktivitas.</p>
+
+        <div class="modal-actions">
+            <button onclick="closeDetailModal()" class="btn btn-secondary">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL AKTIVITAS -->
+<div class="modal-overlay" id="activityModal" style="display:none;">
+    <div class="modal">
+        <h3 id="activityTitle"></h3>
+        <form id="activityForm">
+            <input type="hidden" id="activityType">
+            <div id="activityFields"></div>
+            <div class="form-group">
+                <label>Deskripsi (opsional)</label>
+                <textarea id="activityDeskripsi" rows="2" placeholder="Catatan tambahan..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeActivityModal()" class="btn btn-secondary">Batal</button>
+                <button type="submit" class="btn btn-primary" id="activitySaveBtn">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/perangkat.js"></script>
+{% endblock %}

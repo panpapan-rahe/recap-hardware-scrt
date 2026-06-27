@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Recap Hardware</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h1>📦 Recap Hardware</h1>
+            <p class="text-muted">Sistem Pencatatan Perangkat IT</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" placeholder="Masukkan username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Masukkan password" required>
+                </div>
+                <p id="loginError" class="text-danger"></p>
+                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                    <span>Login</span>
+                </button>
+            </form>
+            <p class="text-muted text-center mt-3">
+                <small>Default login: admin / admin123</small>
+            </p>
+        </div>
+    </div>
+
+    <div class="toast"></div>
+
+    <script src="/static/js/auth.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (Auth.isLoggedIn()) {
+            window.location.href = '/dashboard.html';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'Loading...';
+            document.getElementById('loginError').textContent = '';
+
+            try {
+                await Auth.login(
+                    document.getElementById('username').value,
+                    document.getElementById('password').value
+                );
+                window.location.href = '/dashboard.html';
+            } catch (err) {
+                document.getElementById('loginError').textContent = err.message;
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'Login';
+            }
+        });
+    </script>
+</body>
+</html>

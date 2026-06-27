@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Recap Hardware{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {% block navbar %}{% include 'partials/navbar.html' %}{% endblock %}
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- TOAST -->
+    <div class="toast"></div>
+
+    <script src="/static/js/auth.js"></script>
+    {% block scripts %}{% endblock %}
+
+    <script>
+        // Display user name in navbar
+        const user = Auth.getUser();
+        if (user) {
+            document.getElementById('userDisplay').textContent = user.nama_lengkap || user.username;
+        }
+    </script>
+</body>
+</html>

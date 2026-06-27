@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard - Recap Hardware{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+<div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+        <div class="stat-number" id="statTotal">0</div>
+        <div class="stat-label">Total Perangkat</div>
+    </div>
+</div>
+<h3 class="mt-4">Status Perangkat</h3>
+<div class="stats-grid" id="statusGrid"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const data = await Auth.api('GET', '/perangkat/dashboard/stats');
+        document.getElementById('statTotal').textContent = data.total || 0;
+
+        const statsGrid = document.getElementById('statsGrid');
+        let statsHTML = `
+            <div class="stat-card">
+                <div class="stat-number">${data.total || 0}</div>
+                <div class="stat-label">Total Perangkat</div>
+            </div>
+        `;
+        (data.per_cabang || []).forEach(item => {
+            statsHTML += `
+                <div class="stat-card">
+                    <div class="stat-number">${item.jumlah}</div>
+                    <div class="stat-label">${item.nama}</div>
+                </div>
+            `;
+        });
+        statsGrid.innerHTML = statsHTML;
+
+        const statusGrid = document.getElementById('statusGrid');
+        let statusHTML = '';
+        (data.per_status || []).forEach(item => {
+            statusHTML += `
+                <div class="stat-card stat-card-sm">
+                    <div class="stat-number">${item.jumlah}</div>
+                    <div class="stat-label">${item.status}</div>
+                </div>
+            `;
+        });
+        statusGrid.innerHTML = statusHTML;
+    } catch (e) {
+        Auth.showToast('Gagal memuat dashboard', 'error');
+    }
+});
+</script>
+{% endblock %}

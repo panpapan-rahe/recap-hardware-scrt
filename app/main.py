@@ -70,8 +70,32 @@ app.include_router(report_router, prefix="/api")
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+def home(request: Request):
+    return templates.TemplateResponse(request=request, name="dashboard.html")
+
+@app.get("/login.html", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html")
+
+@app.get("/dashboard.html", response_class=HTMLResponse)
+def dashboard(request: Request):
+    return templates.TemplateResponse(request=request, name="dashboard.html")
+
+@app.get("/cabang.html", response_class=HTMLResponse)
+def cabang_page(request: Request):
+    return templates.TemplateResponse(request=request, name="cabang.html")
+
+@app.get("/perangkat.html", response_class=HTMLResponse)
+def perangkat_page(request: Request):
+    return templates.TemplateResponse(request=request, name="perangkat.html")
+
+@app.get("/aktivitas.html", response_class=HTMLResponse)
+def aktivitas_page(request: Request):
+    return templates.TemplateResponse(request=request, name="aktivitas.html")
+
+@app.get("/report.html", response_class=HTMLResponse)
+def report_page(request: Request):
+    return templates.TemplateResponse(request=request, name="report.html")
 
 
 @app.get("/health")
