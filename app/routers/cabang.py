@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.cabang import Cabang
 from app.schemas.cabang import CabangCreate, CabangUpdate, CabangResponse
-from app.deps import require_admin
+from app.deps import require_admin, get_current_user
 
 router = APIRouter(tags=["Cabang"])
 
 
 @router.get("/", response_model=list[CabangResponse])
-def list_cabang(db: Session = Depends(get_db), admin=Depends(require_admin)):
+def list_cabang(db: Session = Depends(get_db), user=Depends(get_current_user)):
     return db.query(Cabang).order_by(Cabang.kode).all()
 
 
