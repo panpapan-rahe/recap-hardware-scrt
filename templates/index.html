@@ -271,12 +271,22 @@
         <div class="modal">
             <h3 x-text="editMode === 'cabang' ? 'Edit Cabang' : 'Tambah Cabang'"></h3>
             <form @submit.prevent="saveItem('cabang')">
-                <div class="form-group"><label>Kode</label><input type="text" x-model="form.kode" required></div>
-                <div class="form-group"><label>Nama</label><input type="text" x-model="form.nama" required></div>
-                <div class="form-group"><label>Alamat</label><textarea x-model="form.alamat" rows="2"></textarea></div>
+                <div class="form-group">
+                    <label>Nama Cabang <span class="text-danger">*</span></label>
+                    <input type="text" x-model="form.nama" placeholder="Contoh: Cabang Pusat" required>
+                </div>
+                <div class="form-group">
+                    <label>Kode Cabang <span class="text-danger">*</span></label>
+                    <input type="text" x-model="form.kode" placeholder="Contoh: BR01" required>
+                </div>
+                <div class="form-group">
+                    <label>Alamat Cabang <span class="text-muted">(Opsional)</span></label>
+                    <textarea x-model="form.alamat" rows="2" placeholder="Alamat lengkap cabang"></textarea>
+                </div>
+                <p x-show="!form.nama || !form.kode" class="text-danger"><small>⚠️ Nama dan Kode Cabang wajib diisi.</small></p>
                 <div class="modal-actions">
                     <button type="button" @click="closeModal()" class="btn btn-secondary">Batal</button>
-                    <button type="submit" class="btn btn-primary" :disabled="loading">
+                    <button type="submit" class="btn btn-primary" :disabled="loading || !form.nama || !form.kode">
                         <span x-show="!loading">Simpan</span><span x-show="loading">Menyimpan...</span>
                     </button>
                 </div>

@@ -163,6 +163,10 @@ function app() {
 
         // CRUD
         async saveItem(type) {
+            if (type === 'cabang' && (!this.form.nama || !this.form.kode)) {
+                this.showToast('Nama dan Kode Cabang wajib diisi', 'error');
+                return;
+            }
             this.loading = true;
             try {
                 if (this.editMode === type) {
