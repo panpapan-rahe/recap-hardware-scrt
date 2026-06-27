@@ -89,17 +89,17 @@
             </div>
             <table class="data-table">
                 <thead>
-                    <tr><th>No</th><th>Kode Cabang</th><th>Inisial Cabang</th><th>Nama Cabang</th><th>Alamat Cabang</th><th>Aksi</th></tr>
+                    <tr><th class="col-number">No</th><th>Kode Cabang</th><th>Inisial Cabang</th><th>Nama Cabang</th><th>Alamat Cabang</th><th class="col-actions"></th></tr>
                 </thead>
                 <tbody>
                     <template x-for="(item, idx) in cabangList" :key="item.id">
                         <tr>
-                            <td><span x-text="idx + 1"></span></td>
+                            <td class="col-number"><span x-text="idx + 1"></span></td>
                             <td><span x-text="item.kode"></span></td>
                             <td><span x-text="item.inisial || '-'"></span></td>
                             <td><span x-text="item.nama"></span></td>
                             <td><span x-text="item.alamat || '-'"></span></td>
-                            <td>
+                            <td class="col-actions">
                                 <button @click="editItem('cabang', item)" class="btn btn-sm btn-warning">Edit</button>
                                 <button @click="deleteItem('cabang', item.id)" class="btn btn-sm btn-danger">Hapus</button>
                             </td>
