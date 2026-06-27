@@ -15,7 +15,6 @@
         <div class="nav-links">
             <a href="#" @click.prevent="currentPage = 'dashboard'" :class="{ active: currentPage === 'dashboard' }">Dashboard</a>
             <a href="#" @click.prevent="currentPage = 'cabang'" :class="{ active: currentPage === 'cabang' }">Cabang</a>
-            <a href="#" @click.prevent="currentPage = 'kategori'" :class="{ active: currentPage === 'kategori' }">Kategori</a>
             <a href="#" @click.prevent="currentPage = 'perangkat'" :class="{ active: currentPage === 'perangkat' }">Perangkat</a>
             <a href="#" @click.prevent="currentPage = 'aktivitas'" :class="{ active: currentPage === 'aktivitas' }">Aktivitas</a>
             <a href="#" @click.prevent="currentPage = 'report'" :class="{ active: currentPage === 'report' }">Report</a>
@@ -110,33 +109,6 @@
             <p x-show="cabangList.length === 0" class="text-muted text-center">Belum ada data cabang.</p>
         </section>
 
-        <!-- KATEGORI -->
-        <section x-show="currentPage === 'kategori'" x-transition>
-            <div class="page-header">
-                <h2>Kategori Perangkat</h2>
-                <button @click="openModal('kategori')" class="btn btn-primary">+ Tambah Kategori</button>
-            </div>
-            <table class="data-table">
-                <thead>
-                    <tr><th>No</th><th>Nama</th><th>Deskripsi</th><th>Aksi</th></tr>
-                </thead>
-                <tbody>
-                    <template x-for="(item, idx) in kategoriList" :key="item.id">
-                        <tr>
-                            <td><span x-text="idx + 1"></span></td>
-                            <td><span x-text="item.nama"></span></td>
-                            <td><span x-text="item.deskripsi || '-'"></span></td>
-                            <td>
-                                <button @click="editItem('kategori', item)" class="btn btn-sm btn-warning">Edit</button>
-                                <button @click="deleteItem('kategori', item.id)" class="btn btn-sm btn-danger">Hapus</button>
-                            </td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
-            <p x-show="kategoriList.length === 0" class="text-muted text-center">Belum ada data kategori.</p>
-        </section>
-
         <!-- PERANGKAT -->
         <section x-show="currentPage === 'perangkat'" x-transition>
             <div class="page-header">
@@ -150,12 +122,6 @@
                         <option :value="c.id" x-text="c.nama"></option>
                     </template>
                 </select>
-                <select x-model="filterKategori" @change="loadPerangkat()" class="form-control">
-                    <option value="">Semua Kategori</option>
-                    <template x-for="k in kategoriList" :key="k.id">
-                        <option :value="k.id" x-text="k.nama"></option>
-                    </template>
-                </select>
                 <select x-model="filterStatus" @change="loadPerangkat()" class="form-control">
                     <option value="">Semua Status</option>
                     <option value="aktif">Aktif</option>
@@ -167,14 +133,13 @@
             </div>
             <table class="data-table">
                 <thead>
-                    <tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Merk/Type</th><th>Cabang</th><th>Status</th><th>Aksi</th></tr>
+                    <tr><th>Kode</th><th>Nama</th><th>Merk/Type</th><th>Cabang</th><th>Status</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
                     <template x-for="item in perangkatList" :key="item.id">
                         <tr>
                             <td><span x-text="item.kode_unik"></span></td>
                             <td><span x-text="item.nama"></span></td>
-                            <td><span x-text="getNamaKategori(item.kategori_id)"></span></td>
                             <td><span x-text="(item.merk || '') + ' ' + (item.model || '')"></span></td>
                             <td><span x-text="getNamaCabang(item.cabang_id)"></span></td>
                             <td><span class="badge" :class="'badge-' + item.status" x-text="item.status"></span></td>
@@ -228,12 +193,6 @@
                         <option :value="c.id" x-text="c.nama"></option>
                     </template>
                 </select>
-                <select x-model="reportKategori" @change="applyReportFilter()" class="form-control">
-                    <option value="">Semua Kategori</option>
-                    <template x-for="k in kategoriList" :key="k.id">
-                        <option :value="k.id" x-text="k.nama"></option>
-                    </template>
-                </select>
                 <select x-model="reportStatus" @change="applyReportFilter()" class="form-control">
                     <option value="">Semua Status</option>
                     <option value="aktif">Aktif</option>
@@ -246,14 +205,13 @@
             <p class="text-muted">Total: <span x-text="reportData.length"></span> perangkat</p>
             <table class="data-table">
                 <thead>
-                    <tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Merk/Type</th><th>Cabang</th><th>Lokasi</th><th>Status</th></tr>
+                    <tr><th>Kode</th><th>Nama</th><th>Merk/Type</th><th>Cabang</th><th>Lokasi</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                     <template x-for="item in reportData" :key="item.id">
                         <tr>
                             <td><span x-text="item.kode_unik"></span></td>
                             <td><span x-text="item.nama"></span></td>
-                            <td><span x-text="item.kategori"></span></td>
                             <td><span x-text="(item.merk || '') + ' ' + (item.model || '')"></span></td>
                             <td><span x-text="item.cabang"></span></td>
                             <td><span x-text="item.lokasi_detail || '-'"></span></td>
@@ -301,36 +259,12 @@
         </div>
     </div>
 
-    <!-- MODAL KATEGORI -->
-    <div x-show="modal === 'kategori'" class="modal-overlay" x-transition>
-        <div class="modal">
-            <h3 x-text="editMode === 'kategori' ? 'Edit Kategori' : 'Tambah Kategori'"></h3>
-            <form @submit.prevent="saveItem('kategori')">
-                <div class="form-group"><label>Nama</label><input type="text" x-model="form.nama" required></div>
-                <div class="form-group"><label>Deskripsi</label><textarea x-model="form.deskripsi" rows="2"></textarea></div>
-                <div class="modal-actions">
-                    <button type="button" @click="closeModal()" class="btn btn-secondary">Batal</button>
-                    <button type="submit" class="btn btn-primary" :disabled="loading">
-                        <span x-show="!loading">Simpan</span><span x-show="loading">Menyimpan...</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- MODAL PERANGKAT -->
     <div x-show="modal === 'perangkat'" class="modal-overlay" x-transition>
         <div class="modal modal-lg">
             <h3 x-text="editMode === 'perangkat' ? 'Edit Perangkat' : 'Tambah Perangkat'"></h3>
             <form @submit.prevent="saveItem('perangkat')">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Kategori</label>
-                        <select x-model="form.kategori_id" required>
-                            <option value="">Pilih Kategori</option>
-                            <template x-for="k in kategoriList" :key="k.id"><option :value="k.id" x-text="k.nama"></option></template>
-                        </select>
-                    </div>
                     <div class="form-group">
                         <label>Cabang</label>
                         <select x-model="form.cabang_id" required>
@@ -377,7 +311,6 @@
                 <table class="detail-table">
                     <tr><td><strong>Kode Unik</strong></td><td x-text="selectedItem.kode_unik"></td></tr>
                     <tr><td><strong>Nama</strong></td><td x-text="selectedItem.nama"></td></tr>
-                    <tr><td><strong>Kategori</strong></td><td x-text="getNamaKategori(selectedItem.kategori_id)"></td></tr>
                     <tr><td><strong>Merk</strong></td><td x-text="selectedItem.merk || '-'"></td></tr>
                     <tr><td><strong>Type</strong></td><td x-text="selectedItem.model || '-'"></td></tr>
                     <tr><td><strong>Adjuro</strong></td><td x-text="selectedItem.adjuro || '-'"></td></tr>

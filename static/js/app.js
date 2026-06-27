@@ -11,13 +11,11 @@ function app() {
 
         // DATA
         cabangList: [],
-        kategoriList: [],
         perangkatList: [],
         aktivitasList: [],
         riwayatList: [],
         stats: { total: 0, per_cabang: [], per_status: [] },
         filterCabang: '',
-        filterKategori: '',
         filterStatus: '',
         filterAktivitasCabang: '',
         filterAktivitasTipe: '',
@@ -36,7 +34,6 @@ function app() {
 
         // REPORT
         reportCabang: '',
-        reportKategori: '',
         reportStatus: '',
         reportData: [],
 
@@ -58,11 +55,6 @@ function app() {
             if (!id) return '-';
             const c = this.cabangList.find(x => x.id == id);
             return c ? c.nama : id;
-        },
-        getNamaKategori(id) {
-            if (!id) return '-';
-            const k = this.kategoriList.find(x => x.id == id);
-            return k ? k.nama : id;
         },
         formatDate(d) {
             if (!d) return '-';
@@ -108,7 +100,7 @@ function app() {
 
         // LOAD DATA
         async loadAll() {
-            await Promise.all([this.loadCabang(), this.loadKategori(), this.loadPerangkat(), this.loadDashboard(), this.loadAktivitas()]);
+            await Promise.all([this.loadCabang(), this.loadPerangkat(), this.loadDashboard(), this.loadAktivitas()]);
         },
         async loadCabang() {
             try {
@@ -116,13 +108,11 @@ function app() {
                 this.cabangList.sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
             } catch (e) { this.cabangList = []; }
         },
-        async loadKategori() { try { this.kategoriList = await this.api('GET', '/kategori/') || []; } catch (e) { this.kategoriList = []; } },
         async loadPerangkat() {
             try {
                 let url = '/perangkat/';
                 const params = [];
                 if (this.filterCabang) params.push('cabang_id=' + this.filterCabang);
-                if (this.filterKategori) params.push('kategori_id=' + this.filterKategori);
                 if (this.filterStatus) params.push('status=' + this.filterStatus);
                 if (params.length) url += '?' + params.join('&');
                 this.perangkatList = await this.api('GET', url) || [];
@@ -234,7 +224,6 @@ function app() {
                 let url = '/report/data?';
                 const params = [];
                 if (this.reportCabang) params.push('cabang_id=' + this.reportCabang);
-                if (this.reportKategori) params.push('kategori_id=' + this.reportKategori);
                 if (this.reportStatus) params.push('status=' + this.reportStatus);
                 url += params.join('&');
                 const res = await this.api('GET', url);
@@ -246,7 +235,6 @@ function app() {
                 let url = '/report/export/csv?';
                 const params = [];
                 if (this.reportCabang) params.push('cabang_id=' + this.reportCabang);
-                if (this.reportKategori) params.push('kategori_id=' + this.reportKategori);
                 if (this.reportStatus) params.push('status=' + this.reportStatus);
                 url += params.join('&');
                 const res = await fetch('/api' + url, { headers: { 'Authorization': 'Bearer ' + this.token } });
@@ -263,7 +251,6 @@ function app() {
                 let url = '/report/export/pdf?';
                 const params = [];
                 if (this.reportCabang) params.push('cabang_id=' + this.reportCabang);
-                if (this.reportKategori) params.push('kategori_id=' + this.reportKategori);
                 if (this.reportStatus) params.push('status=' + this.reportStatus);
                 url += params.join('&');
                 const res = await fetch('/api' + url, { headers: { 'Authorization': 'Bearer ' + this.token } });
