@@ -1,6 +1,12 @@
-// CABANG PAGE LOGIC
+// ========================================
+// CABANG PAGE
+// ========================================
 let cabangList = [];
 let loading = false;
+
+async function init() {
+    await loadCabang();
+}
 
 async function loadCabang() {
     try {
@@ -23,9 +29,9 @@ function renderTable() {
     }
     emptyMsg.style.display = 'none';
 
-    tbody.innerHTML = cabangList.map((item, idx) => `
+    tbody.innerHTML = cabangList.map((item, i) => `
         <tr>
-            <td class="col-number">${idx + 1}</td>
+            <td>${i + 1}</td>
             <td>${item.kode}</td>
             <td>${item.inisial || '-'}</td>
             <td>${item.nama}</td>
@@ -43,7 +49,6 @@ function openModal() {
     document.getElementById('modalTitle').textContent = 'Tambah Cabang';
     document.getElementById('cabangForm').reset();
     document.getElementById('editId').value = '';
-    document.getElementById('formError').style.display = 'none';
 }
 
 function editItem(id) {
@@ -56,7 +61,6 @@ function editItem(id) {
     document.getElementById('formKode').value = item.kode;
     document.getElementById('formInisial').value = item.inisial || '';
     document.getElementById('formAlamat').value = item.alamat || '';
-    document.getElementById('formError').style.display = 'none';
 }
 
 function closeModal() {
@@ -65,19 +69,19 @@ function closeModal() {
 
 async function saveItem() {
     const editId = document.getElementById('editId').value;
-    const nama = document.getElementById('formNama').value.trim();
-    const kode = document.getElementById('formKode').value.trim();
-    const inisial = document.getElementById('formInisial').value.trim();
-    const alamat = document.getElementById('formAlamat').value.trim();
+    const body = {
+        nama: document.getElementById('formNama').value.trim(),
+        kode: document.getElementById('formKode').value.trim(),
+        inisial: document.getElementById('formInisial').value.trim(),
+        alamat: document.getElementById('formAlamat').value.trim()
+    };
 
-    if (!nama || !kode) {
-        document.getElementById('formError').style.display = 'block';
+    if (!body.nama || !body.kode) {
+        Auth.showToast('Nama dan Kode Cabang wajib diisi', 'error');
         return;
     }
 
-    const body = { nama, kode, inisial, alamat };
     loading = true;
-    document.getElementById('saveBtnSubmit').disabled = true;
     document.getElementById('saveBtn').textContent = 'Menyimpan...';
 
     try {
@@ -94,13 +98,12 @@ async function saveItem() {
         Auth.showToast(e.message, 'error');
     } finally {
         loading = false;
-        document.getElementById('saveBtnSubmit').disabled = false;
         document.getElementById('saveBtn').textContent = 'Simpan';
     }
 }
 
 async function deleteItem(id) {
-    if (!confirm('Yakin ingin menghapus data ini?')) return;
+    if (!confirm('Yakin ingin menghapus cabang ini?')) return;
     try {
         await Auth.api('DELETE', '/cabang/' + id);
         Auth.showToast('Data berhasil dihapus', 'success');
@@ -110,11 +113,9 @@ async function deleteItem(id) {
     }
 }
 
-// Form submit
 document.getElementById('cabangForm').addEventListener('submit', function(e) {
     e.preventDefault();
     saveItem();
 });
 
-// Init
-document.addEventListener('DOMContentLoaded', loadCabang);
+document.addEventListener('DOMContentLoaded', init);

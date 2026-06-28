@@ -19,10 +19,8 @@ def get_aktivitas_by_perangkat(db: Session, perangkat_id: int):
     )
 
 
-def get_all_aktivitas(db: Session, limit: int = 100):
-    return (
-        db.query(Aktivitas)
-        .order_by(Aktivitas.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+def get_all_aktivitas(db: Session, limit: int = 100, tipe: str = None):
+    query = db.query(Aktivitas)
+    if tipe:
+        query = query.filter(Aktivitas.tipe == tipe)
+    return query.order_by(Aktivitas.created_at.desc()).limit(limit).all()

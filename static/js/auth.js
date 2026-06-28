@@ -1,78 +1,124 @@
-// SHARED AUTH + API HELPER
-const Auth = {
-    getToken() {
-        return localStorage.getItem('token');
-    },
-    setToken(token) {
-        localStorage.setItem('token', token);
-    },
-    removeToken() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-    },
-    getUser() {
-        try { return JSON.parse(localStorage.getItem('user')) || null; }
-        catch { return null; }
-    },
-    setUser(user) {
-        localStorage.setItem('user', JSON.stringify(user));
-    },
-    isLoggedIn() {
-        return !!this.getToken();
-    },
-    isAdmin() {
-        const user = this.getUser();
-        return user && user.role === 'admin';
-    },
-    async api(method, url, body = null) {
-        const opts = { method, headers: { 'Content-Type': 'application/json' } };
-        const token = this.getToken();
-        if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-        if (body) opts.body = JSON.stringify(body);
-        const res = await fetch('/api' + url, opts);
-        if (res.status === 401) { this.logout(); throw new Error('Unauthorized'); }
-        if (res.status === 403) { throw new Error('Akses ditolak'); }
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Error');
-        return data;
-    },
-    async login(username, password) {
-        const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) };
-        const res = await fetch('/api/auth/login', opts);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Login gagal');
-        this.setToken(data.access_token);
-        await this.fetchMe();
-        return data;
-    },
-    async fetchMe() {
-        try { this.setUser(await this.api('GET', '/auth/me')); }
-        catch { this.logout(); }
-    },
-    logout() {
-        this.removeToken();
-        window.location.href = '/login.html';
-    },
-    formatDate(d) {
-        if (!d) return '-';
-        try {
-            return new Date(d).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        } catch(e) { return d; }
-    },
-    showToast(message, type) {
-        let toast = document.querySelector('.toast');
-        if (!toast) return;
-        toast.textContent = message;
-        toast.className = 'toast toast-' + (type || 'info');
-        toast.classList.add('show');
-        clearTimeout(this._toastTimer);
-        this._toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-};
+// ========================================
+// AUTH HELPERS — Recap Hardware
+// ========================================
+const Auth = (() => {
+    const TOKEN_KEY = 'rh_token';
+    const USER_KEY = 'rh_user';
 
-// Redirect to login if not authenticated
-document.addEventListener('DOMContentLoaded', () => {
-    if (!Auth.isLoggedIn() && !window.location.pathname.includes('login.html')) {
+    function getToken() {
+        return localStorage.getItem(TOKEN_KEY);
+    }
+
+    function setToken(token) {
+        localStorage.setItem(TOKEN_KEY, token);
+    }
+
+    function getUser() {
+        try {
+            return JSON.parse(localStorage.getItem(USER_KEY));
+        } catch {
+            return null;
+        }
+    }
+
+    function setUser(user) {
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+
+    function logout() {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
         window.location.href = '/login.html';
     }
-});
+
+    async function api(method, path, body = null) {
+        const opts = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        };
+
+        const token = getToken();
+        if (token) {
+            opts.headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        if (body) {
+            opts.body = JSON.stringify(body);
+        }
+
+        const res = await fetch(`/api${path}`, opts);
+
+        if (res.status === 401) {
+            logout();
+            throw new Error('Sesi habis, silakan login kembali');
+        }
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+            throw new Error(data?.detail || 'Terjadi kesalahan');
+        }
+
+        return data;
+    }
+
+    async function fetchMe() {
+        const user = await api('GET', '/auth/me');
+        setUser(user);
+        return user;
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 3000);
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function updateSidebar() {
+        const user = getUser();
+        if (!user) return;
+
+        const initial = document.getElementById('userInitial');
+        const name = document.getElementById('userName');
+        const role = document.getElementById('userRole');
+
+        if (initial) initial.textContent = (user.username || 'U')[0].toUpperCase();
+        if (name) name.textContent = user.nama_lengkap || user.username;
+        if (role) role.textContent = user.role;
+
+        // Hide admin-only links for PIC
+        const isAdmin = user.role === 'admin';
+        document.querySelectorAll('[data-admin-only]').forEach(el => {
+            el.style.display = isAdmin ? '' : 'none';
+        });
+    }
+
+    // Auto-init sidebar on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.location.pathname !== '/login.html') {
+            updateSidebar();
+        }
+    });
+
+    return {
+        getToken, setToken, getUser, setUser, logout,
+        api, fetchMe, showToast, formatDate, updateSidebar
+    };
+})();

@@ -1,4 +1,6 @@
-// PERANGKAT PAGE LOGIC
+// ========================================
+// PERANGKAT PAGE
+// ========================================
 let cabangList = [];
 let kategoriList = [];
 let perangkatList = [];
@@ -10,7 +12,6 @@ async function init() {
     await loadCabang();
     await loadKategori();
     await loadPerangkat();
-    await loadAktivitas();
 }
 
 async function loadCabang() {
@@ -18,26 +19,38 @@ async function loadCabang() {
         cabangList = await Auth.api('GET', '/cabang/') || [];
         cabangList.sort((a, b) => (a.kode || '').localeCompare(b.kode || ''));
         populateCabangDropdowns();
-    } catch (e) {
-        // silent
-    }
+    } catch (e) { /* silent */ }
 }
 
 async function loadKategori() {
     try {
         kategoriList = await Auth.api('GET', '/kategori/') || [];
         populateKategoriDropdowns();
-    } catch (e) {
-        // silent
-    }
+    } catch (e) { /* silent */ }
+}
+
+function populateCabangDropdowns() {
+    const filterEl = document.getElementById('filterCabang');
+    const formEl = document.getElementById('formCabang');
+    const options = cabangList.map(c => `<option value="${c.id}">${c.nama}</option>`).join('');
+
+    if (filterEl) filterEl.innerHTML = '<option value="">Semua Cabang</option>' + options;
+    if (formEl) formEl.innerHTML = '<option value="">Pilih Cabang</option>' + options;
 }
 
 function populateKategoriDropdowns() {
+    const filterEl = document.getElementById('filterKategori');
     const formEl = document.getElementById('formKategori');
     const options = kategoriList.map(k => `<option value="${k.id}">${k.nama}</option>`).join('');
-    if (formEl) {
-        formEl.innerHTML = '<option value="">Pilih Kategori</option>' + options;
-    }
+
+    if (filterEl) filterEl.innerHTML = '<option value="">Semua Kategori</option>' + options;
+    if (formEl) formEl.innerHTML = '<option value="">Pilih Kategori</option>' + options;
+}
+
+function getNamaCabang(id) {
+    if (!id) return '-';
+    const c = cabangList.find(x => x.id == id);
+    return c ? c.nama : id;
 }
 
 function getNamaKategori(id) {
@@ -46,27 +59,15 @@ function getNamaKategori(id) {
     return k ? k.nama : id;
 }
 
-function populateCabangDropdowns() {
-    const filterEl = document.getElementById('filterCabang');
-    const formEl = document.getElementById('formCabang');
-
-    const options = cabangList.map(c => `<option value="${c.id}">${c.nama}</option>`).join('');
-
-    if (filterEl) {
-        filterEl.innerHTML = '<option value="">Semua Cabang</option>' + options;
-    }
-    if (formEl) {
-        formEl.innerHTML = '<option value="">Pilih Cabang</option>' + options;
-    }
-}
-
 async function loadPerangkat() {
     try {
         let url = '/perangkat/';
         const params = [];
         const filterCabang = document.getElementById('filterCabang')?.value;
+        const filterKategori = document.getElementById('filterKategori')?.value;
         const filterStatus = document.getElementById('filterStatus')?.value;
         if (filterCabang) params.push('cabang_id=' + filterCabang);
+        if (filterKategori) params.push('kategori_id=' + filterKategori);
         if (filterStatus) params.push('status=' + filterStatus);
         if (params.length) url += '?' + params.join('&');
 
@@ -75,12 +76,6 @@ async function loadPerangkat() {
     } catch (e) {
         Auth.showToast('Gagal memuat data perangkat', 'error');
     }
-}
-
-function getNamaCabang(id) {
-    if (!id) return '-';
-    const c = cabangList.find(x => x.id == id);
-    return c ? c.nama : id;
 }
 
 function renderTable() {
@@ -103,7 +98,7 @@ function renderTable() {
             <td>${getNamaCabang(item.cabang_id)}</td>
             <td><span class="badge badge-${item.status}">${item.status}</span></td>
             <td class="col-actions">
-                <button onclick="detailPerangkat(${item.id})" class="btn btn-sm btn-info">Detail</button>
+                <button onclick="detailPerangkat(${item.id})" class="btn btn-sm btn-secondary">Detail</button>
                 <button onclick="editItem(${item.id})" class="btn btn-sm btn-warning">Edit</button>
                 <button onclick="deleteItem(${item.id})" class="btn btn-sm btn-danger">Hapus</button>
             </td>
@@ -155,6 +150,14 @@ async function saveItem() {
 
     if (!body.cabang_id) {
         Auth.showToast('Pilih Cabang terlebih dahulu', 'error');
+        return;
+    }
+    if (!body.merk) {
+        Auth.showToast('Isi Merek terlebih dahulu', 'error');
+        return;
+    }
+    if (!body.model) {
+        Auth.showToast('Isi Type terlebih dahulu', 'error');
         return;
     }
 
@@ -211,7 +214,6 @@ async function detailPerangkat(id) {
         <tr><td><strong>Status</strong></td><td><span class="badge badge-${item.status}">${item.status}</span></td></tr>
     `;
 
-    // Activity buttons
     const isMutasiRetired = item.status === 'mutasi' || item.status === 'retired';
     document.getElementById('activityActions').style.display = isMutasiRetired ? 'none' : 'block';
     document.getElementById('btnPinjam').style.display = item.status === 'aktif' ? '' : 'none';
@@ -219,7 +221,6 @@ async function detailPerangkat(id) {
     document.getElementById('btnMaintenance').style.display = item.status === 'aktif' ? '' : 'none';
     document.getElementById('btnSelesaiMaintenance').style.display = item.status === 'maintenance' ? '' : 'none';
 
-    // Load riwayat
     try {
         riwayatList = await Auth.api('GET', '/aktivitas/perangkat/' + id) || [];
         renderRiwayat();
@@ -230,7 +231,7 @@ async function detailPerangkat(id) {
 }
 
 function renderRiwayat() {
-    const tbody = document.getElementById('riwayatTable');
+    const tbody = document.getElementById('riwayatTableBody');
     const emptyMsg = document.getElementById('riwayatEmpty');
 
     if (riwayatList.length === 0) {
@@ -243,7 +244,7 @@ function renderRiwayat() {
     tbody.innerHTML = riwayatList.map(a => `
         <tr>
             <td>${Auth.formatDate(a.created_at)}</td>
-            <td><span class="badge">${a.tipe}</span></td>
+            <td><span class="badge badge-${a.tipe === 'tambah' ? 'success' : a.tipe === 'hapus' ? 'danger' : 'warning'}">${a.tipe}</span></td>
             <td>${a.deskripsi || '-'}</td>
             <td>${a.user_id || '-'}</td>
         </tr>
@@ -265,9 +266,9 @@ function openActivityModal(type) {
     if (type === 'pindah') {
         const options = cabangList.filter(c => c.id != selectedItem.cabang_id)
             .map(c => `<option value="${c.id}">${c.nama}</option>`).join('');
-        fieldsEl.innerHTML = `<div class="form-group"><label>Cabang Tujuan</label><select id="activityCabangTujuan" required><option value="">Pilih Cabang</option>${options}</select></div>`;
+        fieldsEl.innerHTML = `<div class="form-group"><label>Cabang Tujuan</label><select id="activityCabangTujuan" class="form-control" required><option value="">Pilih Cabang</option>${options}</select></div>`;
     } else if (type === 'pinjam') {
-        fieldsEl.innerHTML = `<div class="form-group"><label>Nama Peminjam</label><input type="text" id="activityPeminjam" placeholder="Siapa yang meminjam?" required></div>`;
+        fieldsEl.innerHTML = `<div class="form-group"><label>Nama Peminjam</label><input type="text" id="activityPeminjam" class="form-control" placeholder="Siapa yang meminjam?" required></div>`;
     } else {
         fieldsEl.innerHTML = '';
     }
@@ -327,7 +328,7 @@ async function selesaiMaintenance() {
     }
 }
 
-// Form submit
+// Form listeners
 document.getElementById('perangkatForm').addEventListener('submit', function(e) {
     e.preventDefault();
     saveItem();
@@ -338,5 +339,4 @@ document.getElementById('activityForm').addEventListener('submit', function(e) {
     submitActivity();
 });
 
-// Init
 document.addEventListener('DOMContentLoaded', init);

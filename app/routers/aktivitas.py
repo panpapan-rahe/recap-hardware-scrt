@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.aktivitas import AktivitasCreate, AktivitasResponse
@@ -14,8 +14,8 @@ def list_aktivitas_perangkat(perangkat_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[AktivitasResponse])
-def list_all_aktivitas(db: Session = Depends(get_db)):
-    return get_all_aktivitas(db)
+def list_all_aktivitas(tipe: str = Query(None), db: Session = Depends(get_db)):
+    return get_all_aktivitas(db, tipe=tipe)
 
 
 @router.post("/", response_model=AktivitasResponse)

@@ -1,16 +1,15 @@
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app.database import SessionLocal, engine, Base
-from app.models import User, Cabang, Kategori
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models.user import User
+from app.models.cabang import Cabang
+from app.models.kategori import Kategori
 from app.services.auth_service import hash_password
 
 
 def seed():
-    db = SessionLocal()
+    db = next(get_db())
     try:
-        # Buat user admin
+        # Seed admin user (default)
         if not db.query(User).filter(User.username == "admin").first():
             admin = User(
                 username="admin",
@@ -19,21 +18,9 @@ def seed():
                 role="admin",
             )
             db.add(admin)
-            print("✅ Admin user created: admin / admin")
+            print("✅ Admin user (admin / admin)")
 
-        # Buat sample cabang
-        cabang_data = [
-            {"kode": "BR01", "nama": "Cabang Pusat", "alamat": "Jl. Raya No. 1"},
-            {"kode": "BR02", "nama": "Cabang Utara", "alamat": "Jl. Utara No. 10"},
-            {"kode": "BR03", "nama": "Cabang Selatan", "alamat": "Jl. Selatan No. 5"},
-            {"kode": "BR04", "nama": "Cabang Timur", "alamat": "Jl. Timur No. 8"},
-        ]
-        for data in cabang_data:
-            if not db.query(Cabang).filter(Cabang.kode == data["kode"]).first():
-                db.add(Cabang(**data))
-                print(f"✅ Cabang {data['kode']} - {data['nama']}")
-
-        # Buat sample kategori
+        # Seed kategori default
         kategori_data = [
             {"nama": "Laptop", "deskripsi": "Laptop & Notebook"},
             {"nama": "PC Desktop", "deskripsi": "PC Tower / Desktop"},

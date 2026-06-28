@@ -24,11 +24,13 @@ def report_data(
                 "kode_unik": d.kode_unik,
                 "nama": d.nama,
                 "kategori": d.kategori.nama if d.kategori else "-",
+                "kategori_nama": d.kategori.nama if d.kategori else "-",
                 "merk": d.merk,
                 "model": d.model,
                 "serial_number": d.serial_number,
                 "tahun_beli": d.tahun_beli,
                 "cabang": d.cabang.nama if d.cabang else "-",
+                "cabang_nama": d.cabang.nama if d.cabang else "-",
                 "lokasi_detail": d.lokasi_detail,
                 "status": d.status,
             }

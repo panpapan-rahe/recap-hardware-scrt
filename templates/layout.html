@@ -5,48 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Recap Hardware{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% block navbar %}{% include 'partials/navbar.html' %}{% endblock %}
 
-    <main class="container">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="/dashboard.html" class="sidebar-logo">
+            <div class="sidebar-logo-icon">RH</div>
+            <span>Recap Hardware</span>
+        </a>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Menu</div>
+            <a href="/dashboard.html" class="sidebar-link" data-page="dashboard">
+                <span class="sidebar-link-icon">📊</span> Dashboard
+            </a>
+            <a href="/perangkat.html" class="sidebar-link" data-page="perangkat">
+                <span class="sidebar-link-icon">💻</span> Perangkat
+            </a>
+            <a href="/aktivitas.html" class="sidebar-link" data-page="aktivitas">
+                <span class="sidebar-link-icon">📋</span> Aktivitas
+            </a>
+        </div>
+
+        <div class="sidebar-section" id="nav-master">
+            <div class="sidebar-section-title">Master Data</div>
+            <a href="/cabang.html" class="sidebar-link" data-page="cabang" data-admin-only>
+                <span class="sidebar-link-icon">🏢</span> Cabang
+            </a>
+        </div>
+
+        <div class="sidebar-section" id="nav-admin">
+            <div class="sidebar-section-title">Admin</div>
+            <a href="/admin.html" class="sidebar-link" data-page="admin" data-admin-only>
+                <span class="sidebar-link-icon">👥</span> Kelola User
+            </a>
+            <a href="/report.html" class="sidebar-link" data-page="report">
+                <span class="sidebar-link-icon">📄</span> Report
+            </a>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" id="userInitial">A</div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name" id="userName">Admin</div>
+                <div class="sidebar-user-role" id="userRole">Admin</div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <header class="page-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn btn-secondary btn-sm" onclick="toggleSidebar()" id="menuToggle" style="display:none;">☰</button>
+            <h1 class="page-header-title" id="pageTitle">{% block header_title %}{% endblock %}</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <main class="page-body">
         {% block content %}{% endblock %}
     </main>
+</div>
 
-    <!-- TOAST -->
-    <div class="toast"></div>
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
 
-    <script src="/static/js/auth.js"></script>
-    {% block scripts %}{% endblock %}
+<script src="/static/js/auth.js"></script>
+{% block extra_js %}{% endblock %}
 
-    <script>
-        // Display user name in navbar & show admin-only links
-        async function initNavbar() {
-            const user = Auth.getUser();
-            if (user) {
-                document.getElementById('userDisplay').textContent = user.nama_lengkap || user.username;
-                if (user.role === 'admin') {
-                    document.getElementById('adminLink').style.display = '';
-                    document.getElementById('cabangLink').style.display = '';
-                }
-            } else {
-                // User not in localStorage yet, try fetching from API
-                try {
-                    await Auth.fetchMe();
-                    const freshUser = Auth.getUser();
-                    if (freshUser) {
-                        document.getElementById('userDisplay').textContent = freshUser.nama_lengkap || freshUser.username;
-                        if (freshUser.role === 'admin') {
-                            document.getElementById('adminLink').style.display = '';
-                            document.getElementById('cabangLink').style.display = '';
-                        }
-                    }
-                } catch (e) {
-                    // not logged in, stay on login
-                }
-            }
+<script>
+    // Sidebar active state
+    document.addEventListener('DOMContentLoaded', () => {
+        const page = window.location.pathname.split('/').pop().replace('.html', '') || 'dashboard';
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.classList.toggle('active', link.dataset.page === page);
+        });
+
+        // Mobile menu toggle
+        if (window.innerWidth <= 768) {
+            document.getElementById('menuToggle').style.display = '';
         }
-        initNavbar();
-    </script>
+    });
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // Close sidebar on outside click (mobile)
+    document.addEventListener('click', (e) => {
+        const sidebar = document.getElementById('sidebar');
+        const toggle = document.getElementById('menuToggle');
+        if (window.innerWidth <= 768 &&
+            !sidebar.contains(e.target) &&
+            !toggle.contains(e.target) &&
+            sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
+</script>
+
 </body>
 </html>

@@ -1,212 +1,87 @@
 {% extends "layout.html" %}
-{% block title %}Admin - Manage User{% endblock %}
+{% block title %}Admin - Recap Hardware{% endblock %}
+{% block header_title %}Kelola User{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>👤 Manajemen User</h2>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div></div>
     <button onclick="openModal()" class="btn btn-primary">+ Tambah User</button>
 </div>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th class="col-number">No</th>
-            <th>Username</th>
-            <th>Nama Lengkap</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Dibuat</th>
-            <th class="col-actions"></th>
-        </tr>
-    </thead>
-    <tbody id="userTable">
-    </tbody>
-</table>
-<p id="emptyMsg" class="text-muted text-center" style="display:none;">Belum ada user.</p>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Nama Lengkap</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Dibuat</th>
+                    <th class="col-actions"></th>
+                </tr>
+            </thead>
+            <tbody id="userTable"></tbody>
+        </table>
+    </div>
+    <div class="empty-state" id="emptyMsg" style="display:none;">
+        <div class="empty-state-icon">👥</div>
+        <div class="empty-state-text">Belum ada user. Tambahkan user pertama!</div>
+    </div>
+</div>
 
-<!-- MODAL TAMBAH/EDIT -->
-<div class="modal-overlay" id="userModal" style="display:none;">
+<!-- MODAL FORM -->
+<div class="modal-overlay" id="userModal" style="display:none;" onclick="if(event.target===this)closeModal()">
     <div class="modal">
-        <h3 id="modalTitle">Tambah User</h3>
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Tambah User</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
         <form id="userForm">
             <input type="hidden" id="editId">
-            <div class="form-group">
-                <label>Username <span class="text-danger">*</span></label>
-                <input type="text" id="formUsername" placeholder="Username" required>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label>Username <span style="color:var(--red-text);">*</span></label>
+                <input type="text" id="formUsername" class="form-control" placeholder="Username login" required>
             </div>
-            <div class="form-group">
-                <label>Password <span id="passwordRequired" class="text-danger">*</span></label>
-                <input type="password" id="formPassword" placeholder="Password">
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label>Password <span id="passwordRequired" style="color:var(--red-text);">*</span></label>
+                <input type="password" id="formPassword" class="form-control" placeholder="Password login">
             </div>
-            <div class="form-group">
-                <label>Nama Lengkap <span class="text-danger">*</span></label>
-                <input type="text" id="formNama" placeholder="Nama lengkap" required>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label>Nama Lengkap <span style="color:var(--red-text);">*</span></label>
+                <input type="text" id="formNama" class="form-control" placeholder="Nama lengkap user" required>
             </div>
-            <div class="form-group">
-                <label>Role</label>
-                <select id="formRole">
-                    <option value="pic">PIC (IT Cabang)</option>
-                    <option value="admin">Admin (Regional IT)</option>
-                </select>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="formRole" class="form-control">
+                        <option value="PIC">PIC</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="formStatus" class="form-control">
+                        <option value="true">Aktif</option>
+                        <option value="false">Nonaktif</option>
+                    </select>
+                </div>
             </div>
-            <div class="modal-actions">
+
+            <div class="form-actions">
                 <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
                 <button type="submit" class="btn btn-primary" id="saveBtn">Simpan</button>
             </div>
         </form>
     </div>
 </div>
+
 {% endblock %}
 
-{% block scripts %}
-<script>
-let users = [];
-let currentUser = null;
-let loading = false;
-
-async function init() {
-    currentUser = Auth.getUser();
-    if (!currentUser || currentUser.role !== 'admin') {
-        document.body.innerHTML = '<div class="container"><h2>⛔ Akses Ditolak</h2><p>Halaman ini hanya untuk Admin.</p><a href="/dashboard.html" class="btn btn-primary mt-3">Kembali ke Dashboard</a></div>';
-        return;
-    }
-    await loadUsers();
-}
-
-async function loadUsers() {
-    try {
-        users = await Auth.api('GET', '/admin/users') || [];
-        renderTable();
-    } catch (e) {
-        Auth.showToast('Gagal memuat data user', 'error');
-    }
-}
-
-function renderTable() {
-    const tbody = document.getElementById('userTable');
-    const emptyMsg = document.getElementById('emptyMsg');
-
-    if (users.length === 0) {
-        tbody.innerHTML = '';
-        emptyMsg.style.display = 'block';
-        return;
-    }
-    emptyMsg.style.display = 'none';
-
-    tbody.innerHTML = users.map((item, idx) => `
-        <tr>
-            <td class="col-number">${idx + 1}</td>
-            <td>${item.username}</td>
-            <td>${item.nama_lengkap}</td>
-            <td><span class="badge ${item.role === 'admin' ? 'badge-aktif' : 'badge-dipinjam'}">${item.role === 'admin' ? 'Admin' : 'PIC'}</span></td>
-            <td><span class="badge ${item.is_active ? 'badge-aktif' : 'badge-retired'}">${item.is_active ? 'Aktif' : 'Nonaktif'}</span></td>
-            <td>${Auth.formatDate(item.created_at)}</td>
-            <td class="col-actions">
-                <button onclick="editUser(${item.id})" class="btn btn-sm btn-warning">Edit</button>
-                ${item.id !== currentUser.id ? `
-                    <button onclick="toggleActive(${item.id}, ${item.is_active ? 0 : 1})" class="btn btn-sm ${item.is_active ? 'btn-secondary' : 'btn-success'}">${item.is_active ? 'Nonaktifkan' : 'Aktifkan'}</button>
-                    <button onclick="deleteUser(${item.id})" class="btn btn-sm btn-danger">Hapus</button>
-                ` : '<span class="text-muted"><small>Akun Anda</small></span>'}
-            </td>
-        </tr>
-    `).join('');
-}
-
-function openModal() {
-    document.getElementById('userModal').style.display = 'flex';
-    document.getElementById('modalTitle').textContent = 'Tambah User';
-    document.getElementById('userForm').reset();
-    document.getElementById('editId').value = '';
-    document.getElementById('passwordRequired').style.display = '';
-    document.getElementById('formPassword').required = true;
-}
-
-function editUser(id) {
-    const user = users.find(x => x.id === id);
-    if (!user) return;
-    document.getElementById('userModal').style.display = 'flex';
-    document.getElementById('modalTitle').textContent = 'Edit User';
-    document.getElementById('editId').value = user.id;
-    document.getElementById('formUsername').value = user.username;
-    document.getElementById('formNama').value = user.nama_lengkap;
-    document.getElementById('formRole').value = user.role;
-    document.getElementById('formPassword').value = '';
-    document.getElementById('passwordRequired').style.display = 'none';
-    document.getElementById('formPassword').required = false;
-}
-
-function closeModal() {
-    document.getElementById('userModal').style.display = 'none';
-}
-
-async function saveItem() {
-    const editId = document.getElementById('editId').value;
-    const username = document.getElementById('formUsername').value.trim();
-    const password = document.getElementById('formPassword').value;
-    const nama = document.getElementById('formNama').value.trim();
-    const role = document.getElementById('formRole').value;
-
-    if (!username || !nama) {
-        Auth.showToast('Username dan nama wajib diisi', 'error');
-        return;
-    }
-    if (!editId && !password) {
-        Auth.showToast('Password wajib diisi untuk user baru', 'error');
-        return;
-    }
-
-    loading = true;
-    document.getElementById('saveBtn').textContent = 'Menyimpan...';
-
-    try {
-        if (editId) {
-            const body = { nama_lengkap: nama, role };
-            await Auth.api('PUT', '/admin/users/' + editId, body);
-            Auth.showToast('User berhasil diupdate', 'success');
-        } else {
-            await Auth.api('POST', '/admin/users', { username, password, nama_lengkap: nama, role });
-            Auth.showToast('User berhasil ditambahkan', 'success');
-        }
-        closeModal();
-        loadUsers();
-    } catch (e) {
-        Auth.showToast(e.message, 'error');
-    } finally {
-        loading = false;
-        document.getElementById('saveBtn').textContent = 'Simpan';
-    }
-}
-
-async function toggleActive(id, isActive) {
-    const action = isActive ? 'mengaktifkan' : 'menonaktifkan';
-    if (!confirm(`Yakin ingin ${action} user ini?`)) return;
-    try {
-        await Auth.api('POST', '/admin/users/' + id + '/deactivate');
-        Auth.showToast(`User berhasil di${isActive ? 'aktifkan' : 'nonaktifkan'}`, 'success');
-        loadUsers();
-    } catch (e) {
-        Auth.showToast(e.message, 'error');
-    }
-}
-
-async function deleteUser(id) {
-    const user = users.find(x => x.id === id);
-    if (!confirm(`Yakin ingin menghapus user "${user.username}"?`)) return;
-    try {
-        await Auth.api('DELETE', '/admin/users/' + id);
-        Auth.showToast('User berhasil dihapus', 'success');
-        loadUsers();
-    } catch (e) {
-        Auth.showToast(e.message, 'error');
-    }
-}
-
-// Form submit
-document.getElementById('userForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    saveItem();
-});
-
-// Init
-document.addEventListener('DOMContentLoaded', init);
-</script>
+{% block extra_js %}
+<script src="/static/js/admin.js"></script>
 {% endblock %}

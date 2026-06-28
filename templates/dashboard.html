@@ -1,55 +1,54 @@
 {% extends "layout.html" %}
 {% block title %}Dashboard - Recap Hardware{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
 {% block content %}
-<h2>Dashboard</h2>
+
 <div class="stats-grid" id="statsGrid">
     <div class="stat-card">
-        <div class="stat-number" id="statTotal">0</div>
-        <div class="stat-label">Total Perangkat</div>
+        <div class="stat-card-icon blue">💻</div>
+        <div class="stat-card-value" id="totalPerangkat">0</div>
+        <div class="stat-card-label">Total Perangkat</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon green">✓</div>
+        <div class="stat-card-value" id="totalAktif">0</div>
+        <div class="stat-card-label">Perangkat Aktif</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon yellow">📋</div>
+        <div class="stat-card-value" id="totalDipinjam">0</div>
+        <div class="stat-card-label">Dipinjam</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon red">🔧</div>
+        <div class="stat-card-value" id="totalMaintenance">0</div>
+        <div class="stat-card-label">Maintenance</div>
     </div>
 </div>
-<h3 class="mt-4">Status Perangkat</h3>
-<div class="stats-grid" id="statusGrid"></div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">Perangkat per Cabang</div>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="data-table" id="branchTable">
+                <thead>
+                    <tr>
+                        <th>Cabang</th>
+                        <th>Jumlah Perangkat</th>
+                    </tr>
+                </thead>
+                <tbody id="branchTableBody">
+                    <tr><td colspan="2" class="text-muted text-center">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const data = await Auth.api('GET', '/perangkat/dashboard/stats');
-        document.getElementById('statTotal').textContent = data.total || 0;
-
-        const statsGrid = document.getElementById('statsGrid');
-        let statsHTML = `
-            <div class="stat-card">
-                <div class="stat-number">${data.total || 0}</div>
-                <div class="stat-label">Total Perangkat</div>
-            </div>
-        `;
-        (data.per_cabang || []).forEach(item => {
-            statsHTML += `
-                <div class="stat-card">
-                    <div class="stat-number">${item.jumlah}</div>
-                    <div class="stat-label">${item.nama}</div>
-                </div>
-            `;
-        });
-        statsGrid.innerHTML = statsHTML;
-
-        const statusGrid = document.getElementById('statusGrid');
-        let statusHTML = '';
-        (data.per_status || []).forEach(item => {
-            statusHTML += `
-                <div class="stat-card stat-card-sm">
-                    <div class="stat-number">${item.jumlah}</div>
-                    <div class="stat-label">${item.status}</div>
-                </div>
-            `;
-        });
-        statusGrid.innerHTML = statusHTML;
-    } catch (e) {
-        Auth.showToast('Gagal memuat dashboard', 'error');
-    }
-});
-</script>
+{% block extra_js %}
+<script src="/static/js/dashboard.js"></script>
 {% endblock %}

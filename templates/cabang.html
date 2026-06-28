@@ -1,63 +1,76 @@
 {% extends "layout.html" %}
 {% block title %}Cabang - Recap Hardware{% endblock %}
+{% block header_title %}Cabang{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h2>Cabang</h2>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div></div>
     <button onclick="openModal()" class="btn btn-primary">+ Tambah Cabang</button>
 </div>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th class="col-number">No</th>
-            <th>Kode Cabang</th>
-            <th>Inisial Cabang</th>
-            <th>Nama Cabang</th>
-            <th>Alamat Cabang</th>
-            <th class="col-actions"></th>
-        </tr>
-    </thead>
-    <tbody id="cabangTable">
-    </tbody>
-</table>
-<p id="emptyMsg" class="text-muted text-center" style="display:none;">Belum ada data cabang.</p>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Kode Cabang</th>
+                    <th>Inisial</th>
+                    <th>Nama Cabang</th>
+                    <th>Alamat</th>
+                    <th class="col-actions"></th>
+                </tr>
+            </thead>
+            <tbody id="cabangTable"></tbody>
+        </table>
+    </div>
+    <div class="empty-state" id="emptyMsg" style="display:none;">
+        <div class="empty-state-icon">🏢</div>
+        <div class="empty-state-text">Belum ada data cabang. Tambahkan cabang pertama!</div>
+    </div>
+</div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="cabangModal" style="display:none;">
+<!-- MODAL FORM -->
+<div class="modal-overlay" id="cabangModal" style="display:none;" onclick="if(event.target===this)closeModal()">
     <div class="modal">
-        <h3 id="modalTitle">Tambah Cabang</h3>
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Tambah Cabang</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
         <form id="cabangForm">
             <input type="hidden" id="editId">
-            <div class="form-group">
-                <label>Nama Cabang <span class="text-danger">*</span></label>
-                <input type="text" id="formNama" placeholder="Contoh: Cabang Pusat" required>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label>Nama Cabang <span style="color:var(--red-text);">*</span></label>
+                <input type="text" id="formNama" class="form-control" placeholder="Contoh: Cabang Pusat" required>
             </div>
+
             <div class="form-row">
                 <div class="form-group">
-                    <label>Kode Cabang <span class="text-danger">*</span></label>
-                    <input type="text" id="formKode" placeholder="Contoh: BR01" required>
+                    <label>Kode Cabang <span style="color:var(--red-text);">*</span></label>
+                    <input type="text" id="formKode" class="form-control" placeholder="Contoh: BR01" required>
                 </div>
                 <div class="form-group">
-                    <label>Inisial Cabang <span class="text-muted">(Opsional)</span></label>
-                    <input type="text" id="formInisial" placeholder="Contoh: PUS">
+                    <label>Inisial Cabang</label>
+                    <input type="text" id="formInisial" class="form-control" placeholder="Contoh: PUS">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Alamat Cabang <span class="text-muted">(Opsional)</span></label>
-                <textarea id="formAlamat" rows="2" placeholder="Alamat lengkap cabang"></textarea>
+
+            <div class="form-group" style="margin-bottom:16px;">
+                <label>Alamat Cabang</label>
+                <input type="text" id="formAlamat" class="form-control" placeholder="Alamat lengkap (opsional)">
             </div>
-            <p id="formError" class="text-danger" style="display:none;"><small>⚠️ Nama dan Kode Cabang wajib diisi.</small></p>
-            <div class="modal-actions">
+
+            <div class="form-actions">
                 <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
-                <button type="submit" class="btn btn-primary" id="saveBtnSubmit">
-                    <span id="saveBtn">Simpan</span>
-                </button>
+                <button type="submit" class="btn btn-primary" id="saveBtn">Simpan</button>
             </div>
         </form>
     </div>
 </div>
+
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script src="/static/js/cabang.js"></script>
 {% endblock %}

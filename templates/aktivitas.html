@@ -1,56 +1,48 @@
 {% extends "layout.html" %}
 {% block title %}Aktivitas - Recap Hardware{% endblock %}
+{% block header_title %}Log Aktivitas{% endblock %}
 {% block content %}
-<h2>Log Aktivitas</h2>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>Waktu</th>
-            <th>Perangkat</th>
-            <th>Tipe</th>
-            <th>Deskripsi</th>
-            <th>User</th>
-        </tr>
-    </thead>
-    <tbody id="aktivitasTable">
-    </tbody>
-</table>
-<p id="emptyMsg" class="text-muted text-center" style="display:none;">Belum ada aktivitas.</p>
+<div class="filters" style="margin-bottom:20px;">
+    <select id="filterTipe" class="form-control" onchange="loadAktivitas()">
+        <option value="">Semua Tipe</option>
+        <option value="tambah">Tambah</option>
+        <option value="edit">Edit</option>
+        <option value="hapus">Hapus</option>
+        <option value="pindah">Pindah</option>
+        <option value="peminjaman">Peminjaman</option>
+        <option value="pengembalian">Pengembalian</option>
+        <option value="maintenance">Maintenance</option>
+        <option value="selesai_maintenance">Selesai Maintenance</option>
+        <option value="tambah_user">Tambah User</option>
+        <option value="edit_user">Edit User</option>
+        <option value="hapus_user">Hapus User</option>
+        <option value="nonaktif_user">Nonaktif User</option>
+    </select>
+</div>
+
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>Tipe</th>
+                    <th>Deskripsi</th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody id="aktivitasTable"></tbody>
+        </table>
+    </div>
+    <div class="empty-state" id="emptyMsg" style="display:none;">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">Belum ada aktivitas</div>
+    </div>
+</div>
+
 {% endblock %}
 
-{% block scripts %}
-<script>
-async function loadAktivitas() {
-    try {
-        const data = await Auth.api('GET', '/aktivitas/') || [];
-        renderTable(data);
-    } catch (e) {
-        Auth.showToast('Gagal memuat data aktivitas', 'error');
-    }
-}
-
-function renderTable(data) {
-    const tbody = document.getElementById('aktivitasTable');
-    const emptyMsg = document.getElementById('emptyMsg');
-
-    if (data.length === 0) {
-        tbody.innerHTML = '';
-        emptyMsg.style.display = 'block';
-        return;
-    }
-    emptyMsg.style.display = 'none';
-
-    tbody.innerHTML = data.map(item => `
-        <tr>
-            <td>${Auth.formatDate(item.created_at)}</td>
-            <td>${item.tipe}</td>
-            <td>${item.deskripsi || '-'}</td>
-            <td>${item.user_id || '-'}</td>
-        </tr>
-    `).join('');
-}
-
-document.addEventListener('DOMContentLoaded', loadAktivitas);
-</script>
+{% block extra_js %}
+<script src="/static/js/aktivitas.js"></script>
 {% endblock %}
